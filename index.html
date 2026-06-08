@@ -759,27 +759,28 @@ function buildPollaTrends(){
   return slides;
 }
 
+const FREAK_SLIDES=[
+  {icon:'🇳🇿',label:'Tim Payne al rescate',text:'El arquero de Nueva Zelanda ya tiene más fans que Mbappé en TikTok',color:'pink'},
+  {icon:'🏟️',label:'Dato freak',text:'El Mundial 2026 usa 16 estadios en 3 países — el más grande de la historia',color:'white'},
+  {icon:'⚽',label:'Récord histórico',text:'48 selecciones clasificadas — 16 más que Qatar 2022',color:'green'},
+  {icon:'🌎',label:'Sedes',text:'Por primera vez el Mundial se juega en USA, México y Canadá simultáneamente',color:'blue'},
+  {icon:'🥅',label:'Dato curioso',text:'El estadio de Dallas tiene techo retráctil — puede llover adentro si falla',color:'white'},
+  {icon:'📊',label:'Estadística',text:'Argentina llega como campeona defensora buscando su 3er título consecutivo',color:'gold'},
+  {icon:'🔥',label:'Favorito global',text:'Brasil y Argentina son cofavoritos según todas las casas de apuestas',color:'gold'},
+  {icon:'🇳🇿',label:'Tim Payne update',text:'Nominado al Balón de Oro por sus fans de TikTok — FIFA no sabe qué hacer',color:'pink'},
+  {icon:'⏱️',label:'Dato histórico',text:'El partido más largo de la historia fue 2horas 30min incluyendo penales',color:'white'},
+  {icon:'🎯',label:'Goleadores',text:'Haaland, Mbappé y Vinicius son los máximos candidatos al Bota de Oro',color:'green'},
+];
+
 async function fetchTrend(){
   const inner=document.getElementById('trend-inner');if(!inner)return;
-  inner.innerHTML=`<div class="trend-loading"><div class="trend-dot"></div><div class="trend-dot"></div><div class="trend-dot"></div><span style="margin-left:4px;">Buscando tendencias...</span></div>`;
 
-  // First load internal polla slides
+  // Combine polla data + freak slides
   const pollaSlides=buildPollaTrends();
-
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        messages:[{role:'user',content:`Busca 3 datos freak o virales del Mundial 2026 ahora mismo. Cosas curiosas, récords, jugadores virales, estadísticas raras. Responde SOLO JSON sin markdown: {"trends":[{"icon":"🔥","label":"Dato freak","text":"texto corto max 50 chars","color":"white"},{"icon":"🇳🇿","label":"Tim Payne","text":"último dato viral de Tim Payne","color":"pink"},{"icon":"📊","label":"Récord","text":"dato estadístico curioso","color":"green"}]}`}]})
-    });
-    const data=await res.json();
-    let txt='';for(const b of data.content){if(b.type==='text')txt+=b.text;}
-    const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    trendSlides=[...pollaSlides,...(parsed.trends||[])];
-  }catch(e){
-    trendSlides=pollaSlides.length>0?pollaSlides:[{icon:'⚽',label:'Mundial 2026',text:'11 jun — 19 jul · USA · MEX · CAN',color:'white'}];
-  }
+  
+  // Shuffle freak slides and pick 4
+  const shuffled=[...FREAK_SLIDES].sort(()=>Math.random()-0.5).slice(0,4);
+  trendSlides=[...pollaSlides,...shuffled];
 
   if(trendSlides.length>0){
     trendIdx=0;showTrendSlide(0);
