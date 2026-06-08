@@ -1268,16 +1268,56 @@ async function autoLoadKOTeams(){
 }
 
 async function saveManualResults(){
-  const cv=document.getElementById('admin-champ');if(cv&&cv.value)DB.results['champ']=cv.value;
-  const sv=document.getElementById('admin-scorer');if(sv&&sv.value)DB.results['scorer']=sv.value;
-  ['p1','p2','p3'].forEach(k=>{const el=document.getElementById('admin-'+k);if(el&&el.value)DB.results[k]=el.value;});
-  for(const g of Object.values(GROUPS)){for(const m of g.matches){const h=document.getElementById('rh-'+m.key);const a=document.getElementById('ra-'+m.key);if(h&&a&&h.value!==''&&a.value!=='')DB.results[m.key]=[h.value,a.value];}}
-  KO_STRUCTURE.forEach(round=>{for(let s=0;s<round.count;s++){const key=getKoMatchKey(round.key,s);const h=document.getElementById('ko-rh-'+key);const a=document.getElementById('ko-ra-'+key);if(h&&a&&h.value!==''&&a.value!==''){DB.ko[key+'_h']=h.value;DB.ko[key+'_a']=a.value;}}});
-  const fv=document.getElementById('admin-ko-champ');if(fv&&fv.value)DB.ko['ko_champ']=fv.value;
-  DB.results['_lastUpdated']=new Date().toLocaleString('es-CL');await dbSave();
-  const msg=document.getElementById('admin-msg');msg.innerHTML=`<div class="alert alert-success"><i class="ti ti-check"></i> Guardado en la nube.</div>`;
+  // MERGE — solo actualiza los campos que tienen valor, no borra los demás
+  const cv=document.getElementById('admin-champ');
+  if(cv&&cv.value) DB.results['champ']=cv.value;
+  
+  const sv=document.getElementById('admin-scorer');
+  if(sv&&sv.value) DB.results['scorer']=sv.value;
+  
+  ['p1','p2','p3'].forEach(k=>{
+    const el=document.getElementById('admin-'+k);
+    if(el&&el.value) DB.results[k]=el.value;
+  });
+  
+  // Grupos — solo actualiza partidos con ambos valores ingresados
+  for(const g of Object.values(GROUPS)){
+    for(const m of g.matches){
+      const h=document.getElementById('rh-'+m.key);
+      const a=document.getElementById('ra-'+m.key);
+      if(h&&a&&h.value!==''&&a.value!==''){
+        DB.results[m.key]=[h.value,a.value];
+      }
+      // Si el campo está vacío, NO borra el resultado anterior
+    }
+  }
+  
+  // KO — solo actualiza partidos con ambos valores ingresados
+  KO_STRUCTURE.forEach(round=>{
+    for(let s=0;s<round.count;s++){
+      const key=getKoMatchKey(round.key,s);
+      const h=document.getElementById('ko-rh-'+key);
+      const a=document.getElementById('ko-ra-'+key);
+      if(h&&a&&h.value!==''&&a.value!==''){
+        DB.ko[key+'_h']=h.value;
+        DB.ko[key+'_a']=a.value;
+      }
+      // Si vacío, NO borra resultado anterior
+    }
+  });
+  
+  const fv=document.getElementById('admin-ko-champ');
+  if(fv&&fv.value) DB.ko['ko_champ']=fv.value;
+  
+  DB.results['_lastUpdated']=new Date().toLocaleString('es-CL');
+  await dbSave();
+  
+  const msg=document.getElementById('admin-msg');
+  msg.innerHTML=`<div class="alert alert-success"><i class="ti ti-check"></i> Guardado. Solo se actualizaron los campos completados.</div>`;
   setTimeout(()=>{msg.innerHTML='';},3000);
-  renderRanking();buildTicker();if(currentUser)renderMatchSection();renderKo();
+  renderRanking();buildTicker();
+  if(currentUser){renderMatchSection();renderMisPicks();}
+  renderKo();
 }
 
 function showTab(tab){
