@@ -692,18 +692,68 @@ function showGoool(type,emoji,title,msg,cb){
 }
 
 // ─── TREND BANNER ─────────────────────────────────────────────────────────────
+function buildPollaTrends(){
+  // Build slides from internal polla data
+  const slides=[];
+  const users=Object.entries(DB.users).filter(([uid])=>uid!==ADMIN_RUT);
+  if(users.length===0) return slides;
+
+  // Most picked champion
+  const champCount={};
+  users.forEach(([,d])=>{if(d.picks&&d.picks['champ']){champCount[d.picks['champ']]=(champCount[d.picks['champ']]||0)+1;}});
+  const topChamp=Object.entries(champCount).sort((a,b)=>b[1]-a[1])[0];
+  if(topChamp){
+    const pct=Math.round(topChamp[1]/users.length*100);
+    slides.push({icon:flag(topChamp[0]),label:'Favorito de Amplifica',text:`${topChamp[0]} — elegido por el ${pct}% del equipo`,color:'gold'});
+  }
+
+  // Most picked scorer
+  const scorerCount={};
+  users.forEach(([,d])=>{if(d.special&&d.special.scorer){scorerCount[d.special.scorer]=(scorerCount[d.special.scorer]||0)+1;}});
+  const topScorer=Object.entries(scorerCount).sort((a,b)=>b[1]-a[1])[0];
+  if(topScorer){
+    slides.push({icon:'⚽',label:'Goleador más apostado',text:`${topScorer[0]} — ${topScorer[1]} voto${topScorer[1]>1?'s':''}`,color:'green'});
+  }
+
+  // Surprise pick (least expected champion)
+  const allChamps=Object.keys(champCount);
+  if(allChamps.length>1){
+    const surprise=Object.entries(champCount).sort((a,b)=>a[1]-b[1])[0];
+    slides.push({icon:'😱',label:'Pick más atrevido',text:`${surprise[1]} persona${surprise[1]>1?'s':''} apuesta${surprise[1]===1?'':'n'} por ${surprise[0]}`,color:'pink'});
+  }
+
+  // Total participants
+  slides.push({icon:'👥',label:'Equipo apostando',text:`${users.length} participante${users.length===1?'':'s'} inscritos`,color:'blue'});
+
+  return slides;
+}
+
 async function fetchTrend(){
   const inner=document.getElementById('trend-inner');if(!inner)return;
   inner.innerHTML=`<div class="trend-loading"><div class="trend-dot"></div><div class="trend-dot"></div><div class="trend-dot"></div><span style="margin-left:4px;">Buscando tendencias...</span></div>`;
+
+  // First load internal polla slides
+  const pollaSlides=buildPollaTrends();
+
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:`Busca 4-5 tendencias virales del Mundial 2026 ahora mismo. Responde SOLO JSON: {"trends":[{"icon":"⚽","label":"Goleador líder","text":"Nombre · X goles","color":"gold"},{"icon":"🔥","label":"Viral","text":"dato corto","color":"white"},{"icon":"⭐","label":"Jugador del momento","text":"Nombre","color":"pink"},{"icon":"🇳🇿","label":"Tim Payne","text":"último dato viral","color":"white"}]}`}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`Busca 3 datos freak o virales del Mundial 2026 ahora mismo. Cosas curiosas, récords, jugadores virales, estadísticas raras. Responde SOLO JSON sin markdown: {"trends":[{"icon":"🔥","label":"Dato freak","text":"texto corto max 50 chars","color":"white"},{"icon":"🇳🇿","label":"Tim Payne","text":"último dato viral de Tim Payne","color":"pink"},{"icon":"📊","label":"Récord","text":"dato estadístico curioso","color":"green"}]}`}]})
+    });
     const data=await res.json();
     let txt='';for(const b of data.content){if(b.type==='text')txt+=b.text;}
     const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    trendSlides=parsed.trends||[];
-    if(trendSlides.length>0){trendIdx=0;showTrendSlide(0);if(trendTimer)clearInterval(trendTimer);trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},10000);}
+    trendSlides=[...pollaSlides,...(parsed.trends||[])];
   }catch(e){
-    if(inner)inner.innerHTML=`<div class="trend-inner"><div class="trend-icon">⚽</div><div class="trend-content"><div class="trend-label">Mundial 2026</div><div class="trend-text white">11 jun — 19 jul · USA · MEX · CAN</div></div></div>`;
+    trendSlides=pollaSlides.length>0?pollaSlides:[{icon:'⚽',label:'Mundial 2026',text:'11 jun — 19 jul · USA · MEX · CAN',color:'white'}];
+  }
+
+  if(trendSlides.length>0){
+    trendIdx=0;showTrendSlide(0);
+    if(trendTimer)clearInterval(trendTimer);
+    trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},8000);
   }
 }
 function showTrendSlide(idx){
