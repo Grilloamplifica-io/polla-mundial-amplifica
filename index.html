@@ -1327,19 +1327,19 @@ async function saveAdminEdit(){
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async()=>{
-  try{
-    const loadPromise = dbLoad();
-    const timeout = new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
-    await Promise.race([loadPromise, timeout]);
-  }catch(e){
-    console.error('Load failed, continuing with empty DB:', e);
-    DB={users:{},results:{},ko:{}};
-  }
+  // Show app immediately, load DB in background
+  document.getElementById('loading-overlay').style.display='none';
   buildTicker();updateCountdown();
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(updateCountdown,1000);
   fetchTrend();
-  document.getElementById('loading-overlay').style.display='none';
+  // Load DB in background - non-blocking
+  try{
+    await dbLoad();
+    buildTicker();
+  }catch(e){
+    console.error('DB load failed:', e);
+  }
 })();
 </script>
 </body>
