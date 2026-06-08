@@ -262,6 +262,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .admin-edit-score{display:flex;align-items:center;gap:6px;}
 .admin-edit-input{width:42px;height:42px;text-align:center;border:1.5px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;font-family:'Inter',sans-serif;outline:none;}
 .admin-edit-input:focus{border-color:var(--amp-blue);}
+.mispick-group{margin-bottom:16px;}
+.mispick-group-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--amp-blue);text-transform:uppercase;letter-spacing:0.5px;padding:6px 12px;background:#f0f4ff;border-radius:8px;margin-bottom:6px;}
+.mispick-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:0.5px solid var(--border);border-radius:8px;margin-bottom:4px;}
+.mispick-team{display:flex;align-items:center;gap:5px;}
+.mispick-team.right{justify-content:flex-end;}
+.mispick-flag{font-size:18px;}
+.mispick-name{font-size:11px;font-weight:500;color:var(--text);}
+.mispick-score{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--amp-blue);text-align:center;}
+.mispick-score.exact{color:#1a7f37;}
+.mispick-score.winner{color:var(--amp-blue);}
+.mispick-score.miss{color:#c0392b;}
+.mispick-score.pending{color:var(--text3);}
+.mispick-result{font-size:10px;color:var(--text2);text-align:center;margin-top:2px;}
+.mispick-empty{text-align:center;padding:20px;color:var(--text2);font-size:13px;}
+.mispick-special-card{background:linear-gradient(135deg,#1a0050,#2d0080);border:1px solid #a855f7;border-radius:10px;padding:14px;margin-bottom:12px;}
+.mispick-special-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(168,85,247,0.2);}
+.mispick-special-row:last-child{border-bottom:none;}
+.mispick-special-label{font-size:12px;color:#c4b5fd;min-width:100px;}
+.mispick-special-val{font-size:13px;font-weight:600;color:#fff;flex:1;}
+.mispick-special-pts{font-size:11px;font-weight:700;}
 #loading-overlay{position:fixed;inset:0;background:var(--amp-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
 .loading-logo{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color:var(--amp-yellow);letter-spacing:2px;}
 .loading-sub{font-size:13px;color:#9DA4CE;}
@@ -356,6 +376,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="nav-btn active" id="nav-picks" onclick="showTab('picks')">⚽ Picks</button>
       <button class="nav-btn" id="nav-special" onclick="showTab('special')">⭐ Especiales</button>
       <button class="nav-btn" id="nav-ko" onclick="showTab('ko')">🏆 Eliminatoria</button>
+      <button class="nav-btn" id="nav-mispicks" onclick="showTab('mispicks')">📋 Mis Picks</button>
       <button class="nav-btn" id="nav-ranking" onclick="showTab('ranking')">📊 Ranking</button>
       <button class="nav-btn" id="nav-admin" onclick="showTab('admin')" style="display:none;">⚙️ Admin</button>
     </div>
@@ -460,6 +481,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="container" style="padding-top:8px;">
         <button class="btn-primary" id="btn-save-ko" onclick="saveKoPicks()">Guardar picks eliminatoria</button>
       </div>
+    </div>
+
+    <!-- MIS PICKS -->
+    <div id="tab-mispicks" class="container" style="display:none;">
+      <div class="user-info">
+        <div class="user-avatar" id="avatar-mispicks">MA</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;" id="banner-name-mispicks"></div><div style="font-size:11px;color:var(--text2);">Resumen de tus apuestas</div></div>
+        <span class="badge badge-pts" id="banner-pts-mispicks">0 pts</span>
+      </div>
+      <div id="mispicks-content"></div>
     </div>
 
     <!-- RANKING -->
@@ -842,6 +873,16 @@ async function doLogin(){
   buildGroupFilter();renderPicks();renderSpecial();renderKo();renderRanking();
   if(isAdmin)renderAdmin();
   buildTicker();
+  // Show welcome summary if user has existing picks
+  const udCheck=DB.users[uid]||{};
+  const pickCount=Object.keys(udCheck.picks||{}).filter(k=>k!=='champ').length;
+  if(pickCount>0){
+    const pts=calcScore(uid,udCheck.picks,udCheck.koPicks,udCheck.special);
+    setTimeout(()=>{
+      showGoool('success','👋','¡Bienvenido de vuelta!',
+        `Tienes ${pickCount} picks guardados y ${pts} puntos acumulados. Revisa tus apuestas en la pestaña 📋 Mis Picks.`,'');
+    },500);
+  }
 }
 function logout(){
   currentUser=null;userPicks={};userKoPicks={};userSpecial={};
@@ -1240,9 +1281,98 @@ async function saveManualResults(){
 }
 
 function showTab(tab){
-  ['picks','special','ko','ranking','admin'].forEach(t=>{const el=document.getElementById('tab-'+t);if(el)el.style.display=t===tab?'block':'none';const btn=document.getElementById('nav-'+t);if(btn)btn.classList.toggle('active',t===tab);});
+  ['picks','special','ko','mispicks','ranking','admin'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);if(el)el.style.display=t===tab?'block':'none';
+    const btn=document.getElementById('nav-'+t);if(btn)btn.classList.toggle('active',t===tab);
+  });
   if(tab==='ranking')renderRanking();
+  if(tab==='mispicks')renderMisPicks();
   if(tab==='admin'&&currentUser?.isAdmin)renderAdmin();
+}
+
+function renderMisPicks(){
+  if(!currentUser)return;
+  const ud=DB.users[currentUser.uid]||{};
+  const picks=ud.picks||{};
+  const koPicks=ud.koPicks||{};
+  const special=ud.special||{};
+  const pts=calcScore(currentUser.uid,picks,koPicks,special);
+
+  // Update header
+  const ini=currentUser.name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+  const av=document.getElementById('avatar-mispicks');if(av)av.textContent=ini;
+  const bn=document.getElementById('banner-name-mispicks');if(bn)bn.textContent=currentUser.name;
+  const bp=document.getElementById('banner-pts-mispicks');if(bp)bp.textContent=pts+' pts';
+
+  let html='';
+
+  // Champion pick
+  const champPick=picks['champ']||'';
+  const champReal=DB.results['champ']||'';
+  html+=`<div class="mispick-group">`;
+  html+=`<div class="mispick-group-title">🏆 Campeón apostado</div>`;
+  if(champPick){
+    let champStatus='';
+    if(champReal){champStatus=champPick===champReal?'<span style="color:#1a7f37;font-weight:700;">✓ +5 pts</span>':'<span style="color:#c0392b;">✗ 0 pts</span>';}
+    html+=`<div style="background:#fff;border:0.5px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:36px;">${flag(champPick)}</span>
+      <div><div style="font-size:16px;font-weight:600;">${champPick}</div><div style="font-size:12px;color:var(--text2);">${champReal?'Real: '+flag(champReal)+' '+champReal+' '+champStatus:'⏳ Por definir'}</div></div>
+    </div>`;
+  } else {
+    html+=`<div class="mispick-empty">No ingresaste pick de campeón</div>`;
+  }
+  html+=`</div>`;
+
+  // Special picks
+  html+=`<div class="mispick-group"><div class="mispick-group-title">⭐ Apuestas especiales</div>`;
+  html+=`<div class="mispick-special-card">`;
+  // Scorer
+  const scorerPick=special.scorer||'';
+  const scorerReal=DB.results.scorer||'';
+  html+=`<div class="mispick-special-row"><span class="mispick-special-label">⚽ Goleador</span><span class="mispick-special-val">${scorerPick||'—'}</span>`;
+  if(scorerReal&&scorerPick){html+=`<span class="mispick-special-pts" style="color:${scorerPick.toLowerCase()===scorerReal.toLowerCase()?'#4ade80':'#f87171'}">${scorerPick.toLowerCase()===scorerReal.toLowerCase()?'+5':'0'} pts</span>`;}
+  html+=`</div>`;
+  // Podium
+  [{k:'p1',icon:'🥇',label:'Campeón'},{k:'p2',icon:'🥈',label:'Subcampeón'},{k:'p3',icon:'🥉',label:'3er lugar'}].forEach(({k,icon,label})=>{
+    const pv=special[k]||'';const rv=DB.results[k]||'';
+    html+=`<div class="mispick-special-row"><span class="mispick-special-label">${icon} ${label}</span><span class="mispick-special-val">${pv?flag(pv)+' '+pv:'—'}</span>`;
+    if(rv&&pv){html+=`<span class="mispick-special-pts" style="color:${pv===rv?'#4ade80':'#f87171'}">${pv===rv?'+3':'0'} pts</span>`;}
+    html+=`</div>`;
+  });
+  html+=`</div></div>`;
+
+  // Group matches
+  html+=`<div class="mispick-group"><div class="mispick-group-title">⚽ Picks por grupo</div>`;
+  let anyPick=false;
+  for(const [g,gd] of Object.entries(GROUPS)){
+    const groupPicks=gd.matches.filter(m=>picks[m.key]);
+    if(groupPicks.length===0)continue;
+    anyPick=true;
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;padding:6px 4px 3px;">Grupo ${g}</div>`;
+    for(const m of groupPicks){
+      const ph=parseInt(picks[m.key][0]),pa=parseInt(picks[m.key][1]);
+      const res=DB.results[m.key];
+      let scoreClass='pending';let badge='';
+      if(res){
+        const rh=parseInt(res[0]),ra=parseInt(res[1]);
+        if(ph===rh&&pa===ra){scoreClass='exact';badge='<span class="badge badge-exact">+3</span>';}
+        else if((ph>pa&&rh>ra)||(ph<pa&&rh<ra)||(ph===pa&&rh===ra)){scoreClass='winner';badge='<span class="badge badge-winner">+1</span>';}
+        else{scoreClass='miss';badge='<span class="badge badge-miss">0</span>';}
+      }
+      html+=`<div class="mispick-row">
+        <div class="mispick-team"><span class="mispick-flag">${flag(m.h)}</span><span class="mispick-name">${m.h}</span></div>
+        <div style="text-align:center;">
+          <div class="mispick-score ${scoreClass}">${ph} : ${pa}</div>
+          <div class="mispick-result">${res?res[0]+'-'+res[1]+' '+badge:'⏳ '+m.date+' '+m.time}</div>
+        </div>
+        <div class="mispick-team right"><span class="mispick-name">${m.a}</span><span class="mispick-flag">${flag(m.a)}</span></div>
+      </div>`;
+    }
+  }
+  if(!anyPick) html+=`<div class="mispick-empty">No has ingresado picks de grupos aún</div>`;
+  html+=`</div>`;
+
+  document.getElementById('mispicks-content').innerHTML=html;
 }
 
 
