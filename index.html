@@ -531,10 +531,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <script>
-const BIN_ID='6a2253b0da38895dfe8a6bcc';
-const API_KEY='$2a$10$CUCARqfOooRHkoTutaUsQOnu1eWDRxZmLHBiGVvBSDqn3uxQgU2GO';
-const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
-const HEADERS={'Content-Type':'application/json','X-Master-Key':API_KEY,'X-Bin-Versioning':'false'};
+// ─── FIREBASE CONFIG ─────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyA1WFDklBKTEXJZf1MjfVgKbnjZL55LDJU",
+  authDomain: "polla-amplifica.firebaseapp.com",
+  databaseURL: "https://polla-amplifica-default-rtdb.firebaseio.com",
+  projectId: "polla-amplifica",
+  storageBucket: "polla-amplifica.firebasestorage.app",
+  messagingSenderId: "509128962807",
+  appId: "1:509128962807:web:76d85aa5015929879399f2",
+  measurementId: "G-TPJD9W0SVY"
+};
+const DB_URL = firebaseConfig.databaseURL;
 const DEADLINE=new Date('2026-06-11T19:00:00Z');
 
 const FLAGS={
@@ -671,13 +679,16 @@ function isChampLocked(){return new Date()>=DEADLINE;}
 // ─── DB ───────────────────────────────────────────────────────────────────────
 async function dbLoad(){
   try{
-    const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':API_KEY}});
-    const d=await r.json();DB=d.record||{};
+    const r=await fetch(DB_URL+'/db.json');
+    const d=await r.json();
+    if(d&&typeof d==='object'){DB=d;}else{DB={users:{},results:{},ko:{}};}
     ['users','results','ko'].forEach(k=>{if(!DB[k])DB[k]={};});
-  }catch(e){console.error(e);}
+  }catch(e){console.error('dbLoad error:',e);DB={users:{},results:{},ko:{}};}
 }
 async function dbSave(){
-  try{await fetch(BIN_URL,{method:'PUT',headers:HEADERS,body:JSON.stringify(DB)});}catch(e){console.error(e);}
+  try{
+    await fetch(DB_URL+'/db.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)});
+  }catch(e){console.error('dbSave error:',e);}
 }
 
 // ─── GOOOL MODAL ──────────────────────────────────────────────────────────────
