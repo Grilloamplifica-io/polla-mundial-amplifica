@@ -1334,7 +1334,15 @@ async function saveAdminEdit(){
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async()=>{
-  await dbLoad();buildTicker();updateCountdown();
+  try{
+    const loadPromise = dbLoad();
+    const timeout = new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),8000));
+    await Promise.race([loadPromise, timeout]);
+  }catch(e){
+    console.error('Load failed, continuing with empty DB:', e);
+    DB={users:{},results:{},ko:{}};
+  }
+  buildTicker();updateCountdown();
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(updateCountdown,1000);
   fetchTrend();
