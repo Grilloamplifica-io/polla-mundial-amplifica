@@ -428,15 +428,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <div style="font-size:13px;font-weight:700;color:#e9d5ff;margin-bottom:10px;">🥇 Podio del torneo <span class="special-pts">+3 pts c/u</span></div>
           <div class="podium-row">
             <div class="podium-icon">🥇</div>
-            <div style="flex:1;"><div class="podium-label">Campeón</div><select class="podium-select" id="pick-p1" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
+            <div style="flex:1;"><div class="podium-label">1er lugar — Campeón <span style="font-size:10px;color:#c4b5fd;">(+3 pts)</span></div><select class="podium-select" id="pick-p1" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
           </div>
           <div class="podium-row">
             <div class="podium-icon">🥈</div>
-            <div style="flex:1;"><div class="podium-label">Subcampeón</div><select class="podium-select" id="pick-p2" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
+            <div style="flex:1;"><div class="podium-label">2do lugar — Subcampeón <span style="font-size:10px;color:#c4b5fd;">(+3 pts)</span></div><select class="podium-select" id="pick-p2" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
           </div>
           <div class="podium-row">
             <div class="podium-icon">🥉</div>
-            <div style="flex:1;"><div class="podium-label">Tercer lugar</div><select class="podium-select" id="pick-p3" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
+            <div style="flex:1;"><div class="podium-label">3er lugar <span style="font-size:10px;color:#c4b5fd;">(+3 pts)</span></div><select class="podium-select" id="pick-p3" onchange="updateSpecialPts()"><option value="">-- Selecciona --</option></select></div>
           </div>
         </div>
       </div>
@@ -1337,6 +1337,13 @@ async function saveAdminEdit(){
   try{
     await dbLoad();
     buildTicker();
+    // Re-render if user already logged in
+    if(currentUser){
+      renderPicks();
+      renderSpecial();
+      renderKo();
+      renderRanking();
+    }
   }catch(e){
     console.error('DB load failed:', e);
   }
