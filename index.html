@@ -998,9 +998,20 @@ function updatePts(){
 }
 
 function collectPicks(){
-  const picks={};
-  const cv=document.getElementById('pick-champ');if(cv&&cv.value)picks['champ']=cv.value;
-  for(const g of Object.values(GROUPS)){for(const m of g.matches){const h=document.getElementById('h-'+m.key);const a=document.getElementById('a-'+m.key);if(h&&a&&h.value!==''&&a.value!=='')picks[m.key]=[h.value,a.value];}}
+  // Start from existing saved picks so we never lose previously saved data
+  const picks={...userPicks};
+  const cv=document.getElementById('pick-champ');
+  if(cv&&cv.value) picks['champ']=cv.value;
+  for(const g of Object.values(GROUPS)){
+    for(const m of g.matches){
+      const h=document.getElementById('h-'+m.key);
+      const a=document.getElementById('a-'+m.key);
+      if(h&&a&&h.value!==''&&a.value!==''){
+        picks[m.key]=[h.value,a.value];
+      }
+      // If field is empty BUT we have a saved pick, keep the saved one
+    }
+  }
   return picks;
 }
 
@@ -1140,7 +1151,8 @@ async function savePicks(){
   if(done<total){if(!confirm(`Faltan ${total-done} partidos. ¿Guardar igual?`))return;}
   else{if(!confirm('¿Confirmas tus picks? No podrás cambiarlos.'))return;}
   const btn=document.getElementById('btn-save-picks');btn.disabled=true;btn.textContent='Guardando...';
-  DB.users[currentUser.uid]={...(DB.users[currentUser.uid]||{}),name:currentUser.name,area:currentUser.area,picks,locked:true};
+  userPicks=picks; // Update local copy so next save keeps these
+  DB.users[currentUser.uid]={...(DB.users[currentUser.uid]||{}),name:currentUser.name,area:currentUser.area,picks};
   await dbSave();btn.disabled=false;btn.textContent='Guardar picks de grupos';
   document.getElementById('btn-save-wrap').style.display='none';
   showGoool('success','⚽','¡Qué golazooo!','Se han guardado tus picks correctamente','renderPicks');
@@ -1553,13 +1565,20 @@ async function saveAdminEdit(){
   buildTicker();updateCountdown();
   if(cdTimer)clearInterval(cdTimer);
   cdTimer=setInterval(updateCountdown,1000);
+  // Show freak slides immediately
+  trendSlides=[...FREAK_SLIDES].sort(()=>Math.random()-0.5).slice(0,4);
+  if(trendSlides.length>0){trendIdx=0;showTrendSlide(0);if(trendTimer)clearInterval(trendTimer);trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},8000);}
   fetchTrend();
   // Load DB in background - non-blocking
   try{
     await dbLoad();
     buildTicker();
-    // Re-render if user already logged in
+    // Re-render if user already logged in - reload their picks from DB
     if(currentUser){
+      const ud=DB.users[currentUser.uid]||{};
+      userPicks={...ud.picks||{}}; // Reload picks from DB without losing anything
+      userKoPicks={...ud.koPicks||{}};
+      userSpecial={...ud.special||{}};
       renderPicks();
       renderSpecial();
       renderKo();
