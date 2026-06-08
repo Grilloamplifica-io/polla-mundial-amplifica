@@ -531,8 +531,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <script>
-// ─── FIREBASE CONFIG ─────────────────────────────────────────────────────────
-const DB_URL = "https://polla-amplifica-default-rtdb.firebaseio.com";
+// ─── JSONBIN CONFIG ──────────────────────────────────────────────────────────
+const BIN_ID='6a26f03ef5f4af5e29cc76ee';
+const API_KEY='$2a$10$CUCARqfOos8HkkoTutaUsQOnu1eMDRxZmLHBiGVvBSDqn3uxQgU2GO';
+const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const HEADERS={'Content-Type':'application/json','X-Master-Key':API_KEY,'X-Bin-Versioning':'false'};
 const DEADLINE=new Date('2026-06-11T19:00:00Z');
 
 const FLAGS={
@@ -669,21 +672,15 @@ function isChampLocked(){return new Date()>=DEADLINE;}
 // ─── DB ───────────────────────────────────────────────────────────────────────
 async function dbLoad(){
   try{
-    const r=await fetch(DB_URL+'/polla.json?t='+Date.now());
+    const r=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':API_KEY}});
     const d=await r.json();
-    if(d&&typeof d==='object'&&!Array.isArray(d)){DB=d;}
-    else{DB={users:{},results:{},ko:{}};}
+    DB=d.record||{};
     ['users','results','ko'].forEach(k=>{if(!DB[k])DB[k]={};});
   }catch(e){console.error('dbLoad:',e);DB={users:{},results:{},ko:{}};}
 }
 async function dbSave(){
   try{
-    const r=await fetch(DB_URL+'/polla.json',{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(DB)
-    });
-    if(!r.ok)console.error('dbSave failed:',r.status);
+    await fetch(BIN_URL,{method:'PUT',headers:HEADERS,body:JSON.stringify(DB)});
   }catch(e){console.error('dbSave:',e);}
 }
 
@@ -1243,7 +1240,7 @@ async function unlockUser(uid){
   DB.users[uid].koLocked = false;
   DB.users[uid].specialLocked = false;
   await dbSave();
-  showGoool('success','🔓','¡Liberado!',`Los picks de ${name} fueron desbloqueados. Ya puede volver a editarlos.','renderAdminUserList');
+  showGoool('success','🔓','¡Liberado!','Los picks de '+name+' fueron desbloqueados. Ya puede volver a editarlos.','renderAdminUserList');
   renderAdminUserList();
 }
 
