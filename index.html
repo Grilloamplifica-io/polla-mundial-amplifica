@@ -1590,35 +1590,16 @@ async function saveAdminEdit(){
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-(async()=>{
-  // Show app immediately, load DB in background
-  document.getElementById('loading-overlay').style.display='none';
-  buildTicker();updateCountdown();
-  if(cdTimer)clearInterval(cdTimer);
-  cdTimer=setInterval(updateCountdown,1000);
-  // Show freak slides immediately
-  trendSlides=[...FREAK_SLIDES].sort(()=>Math.random()-0.5).slice(0,4);
-  if(trendSlides.length>0){trendIdx=0;showTrendSlide(0);if(trendTimer)clearInterval(trendTimer);trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},8000);}
-  fetchTrend();
-  // Load DB in background - non-blocking
-  try{
-    await dbLoad();
-    buildTicker();
-    // Re-render if user already logged in - reload their picks from DB
-    if(currentUser){
-      const ud=DB.users[currentUser.uid]||{};
-      userPicks={...ud.picks||{}}; // Reload picks from DB without losing anything
-      userKoPicks={...ud.koPicks||{}};
-      userSpecial={...ud.special||{}};
-      renderPicks();
-      renderSpecial();
-      renderKo();
-      renderRanking();
-    }
-  }catch(e){
-    console.error('DB load failed:', e);
-  }
-})();
+// Show app instantly
+document.getElementById('loading-overlay').style.display='none';
+buildTicker();
+updateCountdown();
+if(cdTimer)clearInterval(cdTimer);
+cdTimer=setInterval(updateCountdown,1000);
+trendSlides=[...FREAK_SLIDES].sort(()=>Math.random()-0.5).slice(0,4);
+if(trendSlides.length>0){trendIdx=0;showTrendSlide(0);if(trendTimer)clearInterval(trendTimer);trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},8000);}
+// Load Firebase in background
+setTimeout(async()=>{try{await dbLoad();buildTicker();if(currentUser){const ud=DB.users[currentUser.uid]||{};userPicks={...ud.picks||{}};userKoPicks={...ud.koPicks||{}};userSpecial={...ud.special||{}};renderPicks();renderSpecial();renderKo();renderRanking();}}catch(e){console.error('DB:',e);}},200);
 </script>
 </body>
 </html>
