@@ -572,7 +572,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 // ─── FIREBASE CONFIG ─────────────────────────────────────────────────────────
 const DB_URL='https://polla-amplifica-default-rtdb.firebaseio.com';
 const DEADLINE=new Date('2026-06-11T19:00:00Z');
-const SPECIAL_DEADLINE=new Date('2026-07-19T14:00:00Z'); // antes de la final
+const SPECIAL_DEADLINE=new Date('2026-06-28T06:00:00Z'); // fin fase de grupos
 
 const FLAGS={
   'México':'🇲🇽','Sudáfrica':'🇿🇦','Corea del Sur':'🇰🇷','Rep. Checa':'🇨🇿',
@@ -1072,7 +1072,7 @@ function collectSpecial(){
 }
 function updateSpecialPts(){if(!currentUser)return;document.getElementById('banner-pts-special').textContent=calcScore(currentUser.uid,collectPicks(),collectKoPicks(),collectSpecial())+' pts';}
 function renderSpecial(){
-  const locked=new Date()>=SPECIAL_DEADLINE||(DB.users[currentUser.uid]&&DB.users[currentUser.uid].specialLocked);
+  const locked=new Date()>=SPECIAL_DEADLINE;
   document.getElementById('special-locked-msg').style.display=locked?'block':'none';
   document.getElementById('btn-special-save-wrap').style.display=locked?'none':'block';
   document.getElementById('special-save-msg').style.display='none';
@@ -1526,6 +1526,24 @@ function renderAdminUserList(){
       </div>
     </div>`;
   });
+  // Special bets summary table
+  html += `<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">`;
+  html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#7c3aed;text-transform:uppercase;margin-bottom:10px;">⭐ Apuestas Especiales de todos</div>`;
+  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">`;
+  html += `<thead><tr style="background:#f3e8ff;"><th style="text-align:left;padding:6px 8px;font-weight:700;color:#6b21a8;">Participante</th><th style="text-align:left;padding:6px 8px;font-weight:700;color:#6b21a8;">⚽ Goleador</th><th style="text-align:left;padding:6px 8px;font-weight:700;color:#6b21a8;">🥇 1°</th><th style="text-align:left;padding:6px 8px;font-weight:700;color:#6b21a8;">🥈 2°</th><th style="text-align:left;padding:6px 8px;font-weight:700;color:#6b21a8;">🥉 3°</th></tr></thead><tbody>`;
+  users.forEach(([uid, data], i) => {
+    const sp = data.special || {};
+    const bg = i%2===0?'#fff':'#faf5ff';
+    html += `<tr style="background:${bg};border-bottom:0.5px solid #e9d5ff;">`;
+    html += `<td style="padding:6px 8px;font-weight:600;">${data.name}</td>`;
+    html += `<td style="padding:6px 8px;">${sp.scorer||'<span style="color:var(--text3);">—</span>'}</td>`;
+    html += `<td style="padding:6px 8px;">${sp.p1?flag(sp.p1)+' '+sp.p1:'<span style="color:var(--text3);">—</span>'}</td>`;
+    html += `<td style="padding:6px 8px;">${sp.p2?flag(sp.p2)+' '+sp.p2:'<span style="color:var(--text3);">—</span>'}</td>`;
+    html += `<td style="padding:6px 8px;">${sp.p3?flag(sp.p3)+' '+sp.p3:'<span style="color:var(--text3);">—</span>'}</td>`;
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div></div>`;
+
   wrap.innerHTML = html;
 }
 
