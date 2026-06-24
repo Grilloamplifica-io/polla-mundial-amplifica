@@ -852,6 +852,7 @@ function buildTickerSlides(){
   else if(leaders.length>1)slides.push({icon:'🤝',label:'Empate',value:leaders.map(l=>l.name.split(' ')[0]).join(' & ')+' · '+topPts+' pts',color:'gold'});
   if(users.length>0)slides.push({icon:'👥',label:'Inscritos',value:users.length+' participante'+(users.length===1?'':'s'),color:'blue'});
   const played=Object.keys(DB.results).filter(k=>k!=='champ'&&k!=='_lastUpdated'&&k!=='scorer'&&k!=='p1'&&k!=='p2'&&k!=='p3'&&Array.isArray(DB.results[k]));
+  played.sort((a,b)=>{const ma=ALL_MATCHES.find(x=>x.key===a);const mb=ALL_MATCHES.find(x=>x.key===b);return new Date(ma?.utc||0)-new Date(mb?.utc||0);});
   if(played.length>0){const lk=played[played.length-1];const m=ALL_MATCHES.find(x=>x.key===lk);if(m){const r=DB.results[lk];slides.push({icon:'⚽',label:'Último resultado',value:`${flag(m.h)} ${m.h} ${r[0]}-${r[1]} ${m.a} ${flag(m.a)}`,color:'green'});}}
   const next=ALL_MATCHES.find(m=>!DB.results[m.key]&&new Date()<new Date(m.utc));
   if(next)slides.push({icon:'📅',label:'Próximo partido',value:`${flag(next.h)} ${next.h} vs ${next.a} ${flag(next.a)} · ${next.date} ${next.time}`,color:'white'});
