@@ -507,6 +507,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="card" style="background:#0a0d2e;border-color:rgba(247,220,75,0.3);">
         <div class="card-title" style="color:var(--amp-yellow);">Actualización automática IA</div>
         <div style="font-size:13px;color:#9DA4CE;margin-bottom:12px;">Claude busca resultados reales y los carga automáticamente.</div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;color:#9DA4CE;margin-bottom:4px;">API Key de Anthropic (se guarda solo en este navegador)</div>
+          <div style="display:flex;gap:6px;">
+            <input id="admin-api-key" type="password" placeholder="sk-ant-..." style="flex:1;padding:8px 10px;border-radius:7px;border:1px solid rgba(247,220,75,0.4);background:#1a1d3e;color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none;" oninput="localStorage.setItem('anthropic_key',this.value)"/>
+            <button onclick="document.getElementById('admin-api-key').type=document.getElementById('admin-api-key').type==='password'?'text':'password'" style="padding:6px 10px;border-radius:7px;border:1px solid rgba(247,220,75,0.3);background:transparent;color:#9DA4CE;cursor:pointer;font-size:12px;">👁</button>
+          </div>
+        </div>
         <button class="btn-auto" id="btn-auto-update" onclick="autoUpdateResults()"><i class="ti ti-refresh"></i> Actualizar resultados grupos</button>
         <button class="btn-auto" id="btn-auto-ko" onclick="autoLoadKOTeams()" style="border-color:#a855f7;color:#e9d5ff;"><i class="ti ti-tournament"></i> Cargar clasificados eliminatoria</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
@@ -1229,6 +1236,8 @@ function renderRanking(){
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 function renderAdmin(){
+  const savedKey=localStorage.getItem('anthropic_key')||'';
+  const keyEl=document.getElementById('admin-api-key');if(keyEl&&!keyEl.value&&savedKey)keyEl.value=savedKey;
   let ch=`<div><div class="form-label" style="margin-bottom:4px;">Campeón real</div><select class="form-input" id="admin-champ"><option value="">-- Sin definir --</option>`;
   for(const t of ALL_TEAMS)ch+=`<option value="${t}" ${DB.results['champ']===t?'selected':''}>${flag(t)} ${t}</option>`;
   ch+=`</select></div>`;
@@ -1262,6 +1271,7 @@ function renderAdmin(){
 }
 function toggleSec(id){document.getElementById(id).classList.toggle('open');}
 
+function getApiKey(){const el=document.getElementById('admin-api-key');return el?el.value.trim():localStorage.getItem('anthropic_key')||'';}
 function addLog(msg,type=''){const log=document.getElementById('ai-log');const line=document.createElement('div');line.className='ai-log-line'+(type?' '+type:'');line.textContent=msg;log.appendChild(line);log.scrollTop=log.scrollHeight;}
 
 async function autoUpdateResults(){
@@ -1269,16 +1279,22 @@ async function autoUpdateResults(){
   document.getElementById('ai-log').innerHTML='';btn.disabled=true;statusEl.style.display='block';doneEl.style.display='none';
   document.getElementById('ai-status-text').textContent='Buscando resultados...';
   addLog('Iniciando búsqueda...');
+  const apiKey=getApiKey();
+  if(!apiKey){addLog('Error: Ingresa tu API Key de Anthropic primero.','err');doneEl.innerHTML=`<div class="alert alert-error">Falta la API Key de Anthropic. Ingrésala arriba.</div>`;doneEl.style.display='block';btn.disabled=false;statusEl.style.display='none';return;}
   const allMatchesList=Object.entries(GROUPS).flatMap(([g,gd])=>gd.matches.map(m=>({...m,g})));
   try{
     addLog('Conectando con Claude...');
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:`Busca resultados reales del Mundial 2026. Hoy: ${new Date().toLocaleDateString('es-CL')}. GRUPOS (solo si ya jugaron): ${allMatchesList.map(m=>`${m.key}:${m.h} vs ${m.a}(Grp ${m.g})`).join(', ')} También el goleador líder (campo "scorer") y el campeón si ya hay. Responde SOLO JSON: {"results":{"A-0":[2,1],"champ":"Brasil","scorer":"Mbappé"},"summary":"texto"}`}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:`Busca resultados reales del Mundial 2026. Hoy: ${new Date().toLocaleDateString('es-CL')}. GRUPOS (solo si ya jugaron): ${allMatchesList.map(m=>`${m.key}:${m.h} vs ${m.a}(Grp ${m.g})`).join(', ')} También: goleador líder ("scorer"), campeón si ya hay ("champ"), 1er lugar país ("p1"), 2do lugar país ("p2"), 3er lugar país ("p3"). Responde SOLO JSON: {"results":{"A-0":[2,1],"champ":"Brasil","scorer":"Mbappé","p1":"Brasil","p2":"Argentina","p3":"Francia"},"summary":"texto"}`}]})});
+    if(!res.ok){const errData=await res.json().catch(()=>({}));throw new Error(`API error ${res.status}: ${errData.error?.message||res.statusText}`);}
     const data=await res.json();let txt='';for(const b of data.content){if(b.type==='text')txt+=b.text;}
-    const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    const jsonMatch=txt.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('No se encontró JSON en la respuesta');
+    const parsed=JSON.parse(jsonMatch[0]);
     let updated=0;
     for(const [key,val] of Object.entries(parsed.results||{})){
       if(key==='champ'){if(val){DB.results['champ']=val;addLog(`Campeón: ${val}`,'ok');updated++;}}
       else if(key==='scorer'){if(val){DB.results['scorer']=val;addLog(`Goleador: ${val}`,'ok');updated++;}}
+      else if(key==='p1'||key==='p2'||key==='p3'){if(val){DB.results[key]=val;const label={'p1':'1er lugar','p2':'2do lugar','p3':'3er lugar'}[key];addLog(`${label}: ${val}`,'ok');updated++;}}
       else if(Array.isArray(val)){DB.results[key]=[String(val[0]),String(val[1])];const m=allMatchesList.find(x=>x.key===key);if(m)addLog(`${flag(m.h)} ${m.h} ${val[0]}-${val[1]} ${m.a} ${flag(m.a)}`,'ok');updated++;}
     }
     DB.results['_lastUpdated']=new Date().toLocaleString('es-CL');await dbSave();
@@ -1286,7 +1302,7 @@ async function autoUpdateResults(){
     doneEl.innerHTML=`<div class="alert alert-success"><i class="ti ti-check"></i> ${updated} resultado(s) guardados.</div>`;doneEl.style.display='block';
     document.getElementById('last-updated-admin').textContent='Actualizado: '+DB.results['_lastUpdated'];
     renderAdmin();renderRanking();buildTicker();if(currentUser)renderMatchSection();
-  }catch(err){addLog('Error: '+err.message,'err');doneEl.innerHTML=`<div class="alert alert-error">Error al obtener resultados.</div>`;doneEl.style.display='block';}
+  }catch(err){addLog('Error: '+err.message,'err');doneEl.innerHTML=`<div class="alert alert-error">Error: ${err.message}</div>`;doneEl.style.display='block';}
   btn.disabled=false;statusEl.style.display='none';
 }
 
@@ -1297,10 +1313,15 @@ async function autoLoadKOTeams(){
   document.getElementById('ai-log').innerHTML='';statusEl.style.display='block';doneEl.style.display='none';
   document.getElementById('ai-status-text').textContent='Cargando bracket KO...';
   addLog('Buscando clasificados eliminatoria...');
+  const apiKey=getApiKey();
+  if(!apiKey){addLog('Error: Ingresa tu API Key de Anthropic primero.','err');doneEl.innerHTML=`<div class="alert alert-error">Falta la API Key de Anthropic.</div>`;doneEl.style.display='block';btn.disabled=false;btn.innerHTML=origText;statusEl.style.display='none';return;}
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:`Busca los 32 clasificados para dieciseisavos del Mundial 2026 y sus llaves. Responde SOLO JSON: {"r32_teams":[{"match":0,"top":"Equipo1","bottom":"Equipo2","utc":"2026-07-01T19:00:00Z"},...],"summary":"texto"}`}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:`Busca los 32 clasificados para dieciseisavos del Mundial 2026 y sus llaves. Responde SOLO JSON: {"r32_teams":[{"match":0,"top":"Equipo1","bottom":"Equipo2","utc":"2026-07-01T19:00:00Z"},...],"summary":"texto"}`}]})});
+    if(!res.ok){const errData=await res.json().catch(()=>({}));throw new Error(`API error ${res.status}: ${errData.error?.message||res.statusText}`);}
     const data=await res.json();let txt='';for(const b of data.content){if(b.type==='text')txt+=b.text;}
-    const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    const jsonMatch=txt.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('No se encontró JSON en la respuesta');
+    const parsed=JSON.parse(jsonMatch[0]);
     let loaded=0;
     if(parsed.r32_teams){for(const t of parsed.r32_teams){if(t.top){DB.ko[`ko_team_r32_${t.match}_0`]=t.top;loaded++;}if(t.bottom){DB.ko[`ko_team_r32_${t.match}_1`]=t.bottom;loaded++;}if(t.utc)DB.ko[`ko_time_r32_${t.match}`]=t.utc;}}
     await dbSave();
