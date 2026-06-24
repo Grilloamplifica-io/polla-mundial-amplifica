@@ -1202,7 +1202,7 @@ async function savePicks(){
   await dbSave();btn.disabled=false;btn.textContent='Guardar picks de grupos';
   document.getElementById('btn-save-wrap').style.display='none';
   showGoool('success','⚽','¡Qué golazooo!','Se han guardado tus picks correctamente','renderPicks');
-  renderRanking();buildTicker();
+  renderRanking();buildTicker();fetchTrend();
 }
 async function saveSpecial(){
   const special=collectSpecial();
@@ -1213,7 +1213,7 @@ async function saveSpecial(){
   await dbSave();btn.disabled=false;btn.textContent='Guardar apuestas especiales';
   document.getElementById('btn-special-save-wrap').style.display='none';
   showGoool('success','🎯','¡Bien jugado!','Apuestas especiales guardadas correctamente','renderSpecial');
-  renderRanking();buildTicker();
+  renderRanking();buildTicker();fetchTrend();
 }
 async function saveKoPicks(){
   const koPicks=collectKoPicks();
@@ -1223,7 +1223,7 @@ async function saveKoPicks(){
   DB.users[currentUser.uid]={...(DB.users[currentUser.uid]||{}),name:currentUser.name,area:currentUser.area,koPicks};
   await dbSave();btn.disabled=false;btn.textContent='Guardar picks eliminatoria';
   showGoool('success','🏆','¡Golazo de media cancha!','Picks de eliminatoria guardados correctamente','renderKo');
-  renderRanking();buildTicker();
+  renderRanking();buildTicker();fetchTrend();
 }
 
 // ─── RANKING ──────────────────────────────────────────────────────────────────
@@ -1313,7 +1313,7 @@ async function autoUpdateResults(){
     addLog(parsed.summary||`${updated} resultado(s) cargados.`,'ok');
     doneEl.innerHTML=`<div class="alert alert-success"><i class="ti ti-check"></i> ${updated} resultado(s) guardados.</div>`;doneEl.style.display='block';
     document.getElementById('last-updated-admin').textContent='Actualizado: '+DB.results['_lastUpdated'];
-    renderAdmin();renderRanking();buildTicker();if(currentUser)renderMatchSection();
+    renderAdmin();renderRanking();buildTicker();fetchTrend();if(currentUser)renderMatchSection();
   }catch(err){addLog('Error: '+err.message,'err');doneEl.innerHTML=`<div class="alert alert-error">Error: ${err.message}</div>`;doneEl.style.display='block';}
   btn.disabled=false;statusEl.style.display='none';
 }
@@ -1392,7 +1392,7 @@ async function saveManualResults(){
   const msg=document.getElementById('admin-msg');
   msg.innerHTML=`<div class="alert alert-success"><i class="ti ti-check"></i> Guardado. Solo se actualizaron los campos completados.</div>`;
   setTimeout(()=>{msg.innerHTML='';},3000);
-  renderRanking();buildTicker();
+  renderRanking();buildTicker();fetchTrend();
   if(currentUser){renderMatchSection();renderMisPicks();}
   renderKo();
 }
@@ -1619,7 +1619,7 @@ async function saveAdminEdit(){
   const msg = document.getElementById('admin-edit-msg');
   msg.innerHTML = `<div class="alert alert-success"><i class="ti ti-check"></i> Picks de ${DB.users[uid].name} actualizados.</div>`;
   setTimeout(()=>{msg.innerHTML='';},3000);
-  renderRanking();buildTicker();
+  renderRanking();buildTicker();fetchTrend();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -1632,7 +1632,7 @@ cdTimer=setInterval(updateCountdown,1000);
 trendSlides=[...FREAK_SLIDES].sort(()=>Math.random()-0.5).slice(0,4);
 if(trendSlides.length>0){trendIdx=0;showTrendSlide(0);if(trendTimer)clearInterval(trendTimer);trendTimer=setInterval(()=>{trendIdx=(trendIdx+1)%trendSlides.length;showTrendSlide(trendIdx);},8000);}
 // Load Firebase in background
-setTimeout(async()=>{try{await dbLoad();buildTicker();if(currentUser){const ud=DB.users[currentUser.uid]||{};userPicks={...ud.picks||{}};userKoPicks={...ud.koPicks||{}};userSpecial={...ud.special||{}};renderPicks();renderSpecial();renderKo();renderRanking();}}catch(e){console.error('DB:',e);}},200);
+setTimeout(async()=>{try{await dbLoad();buildTicker();fetchTrend();if(currentUser){const ud=DB.users[currentUser.uid]||{};userPicks={...ud.picks||{}};userKoPicks={...ud.koPicks||{}};userSpecial={...ud.special||{}};renderPicks();renderSpecial();renderKo();renderRanking();}}catch(e){console.error('DB:',e);}},200);
 </script>
 </body>
 </html>
