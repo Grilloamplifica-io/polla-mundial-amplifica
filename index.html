@@ -572,6 +572,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 // ─── FIREBASE CONFIG ─────────────────────────────────────────────────────────
 const DB_URL='https://polla-amplifica-default-rtdb.firebaseio.com';
 const DEADLINE=new Date('2026-06-11T19:00:00Z');
+const SPECIAL_DEADLINE=new Date('2026-07-19T14:00:00Z'); // antes de la final
 
 const FLAGS={
   'México':'🇲🇽','Sudáfrica':'🇿🇦','Corea del Sur':'🇰🇷','Rep. Checa':'🇨🇿',
@@ -1070,7 +1071,7 @@ function collectSpecial(){
 }
 function updateSpecialPts(){if(!currentUser)return;document.getElementById('banner-pts-special').textContent=calcScore(currentUser.uid,collectPicks(),collectKoPicks(),collectSpecial())+' pts';}
 function renderSpecial(){
-  const locked=isChampLocked()||(DB.users[currentUser.uid]&&DB.users[currentUser.uid].specialLocked);
+  const locked=new Date()>=SPECIAL_DEADLINE||(DB.users[currentUser.uid]&&DB.users[currentUser.uid].specialLocked);
   document.getElementById('special-locked-msg').style.display=locked?'block':'none';
   document.getElementById('btn-special-save-wrap').style.display=locked?'none':'block';
   document.getElementById('special-save-msg').style.display='none';
