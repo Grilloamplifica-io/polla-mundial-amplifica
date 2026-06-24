@@ -1569,11 +1569,26 @@ function openAdminEdit(uid){
   document.getElementById('admin-edit-section').scrollIntoView({behavior:'smooth'});
 
   const picks = data.picks || {};
+  const sp = data.special || {};
   const groups = Object.keys(GROUPS);
   let html = '';
 
-  // Champion
-  html += `<div style="margin-bottom:12px;"><div class="form-label">Campeón apostado</div><select class="form-input" id="ae-champ" style="font-size:13px;"><option value="">-- Sin pick --</option>`;
+  // Special bets — FIRST for visibility
+  html += `<div style="margin-bottom:16px;padding:12px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;">`;
+  html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#7c3aed;text-transform:uppercase;margin-bottom:10px;">⭐ Apuestas Especiales</div>`;
+  html += `<div style="margin-bottom:8px;"><div class="form-label" style="margin-bottom:4px;">⚽ Goleador del torneo</div><input class="form-input" id="ae-scorer" type="text" placeholder="Sin pick" value="${sp.scorer||''}"/></div>`;
+  html += `<div style="margin-bottom:8px;"><div class="form-label" style="margin-bottom:4px;">🥇 1er lugar (Campeón)</div><select class="form-input" id="ae-p1"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p1===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div>`;
+  html += `<div style="margin-bottom:8px;"><div class="form-label" style="margin-bottom:4px;">🥈 2do lugar (Subcampeón)</div><select class="form-input" id="ae-p2"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p2===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div>`;
+  html += `<div style="margin-bottom:4px;"><div class="form-label" style="margin-bottom:4px;">🥉 3er lugar</div><select class="form-input" id="ae-p3"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p3===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div></div>`;
+
+  // Champion pick
+  html += `<div style="margin-bottom:12px;"><div class="form-label">Campeón apostado (fase de grupos)</div><select class="form-input" id="ae-champ" style="font-size:13px;"><option value="">-- Sin pick --</option>`;
   for(const t of ALL_TEAMS) html += `<option value="${t}" ${picks['champ']===t?'selected':''}>${flag(t)} ${t}</option>`;
   html += `</select></div>`;
 
@@ -1597,21 +1612,6 @@ function openAdminEdit(uid){
       </div>`;
     }
   }
-  // Special bets section
-  const sp = data.special || {};
-  html += `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">`;
-  html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#7c3aed;text-transform:uppercase;margin-bottom:10px;">⭐ Apuestas Especiales</div>`;
-  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">⚽ Goleador del torneo</div><input class="form-input" id="ae-scorer" type="text" placeholder="Sin pick" value="${sp.scorer||''}"/></div>`;
-  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥇 1er lugar (Campeón)</div><select class="form-input" id="ae-p1"><option value="">-- Sin pick --</option>`;
-  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p1===t?'selected':''}>${flag(t)} ${t}</option>`;
-  html += `</select></div>`;
-  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥈 2do lugar (Subcampeón)</div><select class="form-input" id="ae-p2"><option value="">-- Sin pick --</option>`;
-  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p2===t?'selected':''}>${flag(t)} ${t}</option>`;
-  html += `</select></div>`;
-  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥉 3er lugar</div><select class="form-input" id="ae-p3"><option value="">-- Sin pick --</option>`;
-  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p3===t?'selected':''}>${flag(t)} ${t}</option>`;
-  html += `</select></div>`;
-  html += `</div>`;
 
   document.getElementById('admin-edit-picks').innerHTML = html;
 }
@@ -1660,7 +1660,7 @@ async function saveAdminEdit(){
   const msg = document.getElementById('admin-edit-msg');
   msg.innerHTML = `<div class="alert alert-success"><i class="ti ti-check"></i> Picks de ${DB.users[uid].name} actualizados.</div>`;
   setTimeout(()=>{msg.innerHTML='';},3000);
-  renderRanking();buildTicker();fetchTrend();
+  renderAdminUserList();renderRanking();buildTicker();fetchTrend();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
