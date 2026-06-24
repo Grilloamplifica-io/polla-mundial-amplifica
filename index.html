@@ -1578,6 +1578,22 @@ function openAdminEdit(uid){
       </div>`;
     }
   }
+  // Special bets section
+  const sp = data.special || {};
+  html += `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">`;
+  html += `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#7c3aed;text-transform:uppercase;margin-bottom:10px;">⭐ Apuestas Especiales</div>`;
+  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">⚽ Goleador del torneo</div><input class="form-input" id="ae-scorer" type="text" placeholder="Sin pick" value="${sp.scorer||''}"/></div>`;
+  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥇 1er lugar (Campeón)</div><select class="form-input" id="ae-p1"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p1===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div>`;
+  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥈 2do lugar (Subcampeón)</div><select class="form-input" id="ae-p2"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p2===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div>`;
+  html += `<div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">🥉 3er lugar</div><select class="form-input" id="ae-p3"><option value="">-- Sin pick --</option>`;
+  for(const t of ALL_TEAMS) html += `<option value="${t}" ${sp.p3===t?'selected':''}>${flag(t)} ${t}</option>`;
+  html += `</select></div>`;
+  html += `</div>`;
+
   document.getElementById('admin-edit-picks').innerHTML = html;
 }
 
@@ -1610,6 +1626,12 @@ async function saveAdminEdit(){
       }
     }
   }
+
+  // Save special bets
+  if(!DB.users[uid].special) DB.users[uid].special = {};
+  const aeScorer = document.getElementById('ae-scorer');
+  if(aeScorer) DB.users[uid].special.scorer = aeScorer.value.trim() || '';
+  ['p1','p2','p3'].forEach(k=>{const el=document.getElementById('ae-'+k);if(el)DB.users[uid].special[k]=el.value||'';});
 
   const btn = document.querySelector('#admin-edit-section .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Guardando...';}
