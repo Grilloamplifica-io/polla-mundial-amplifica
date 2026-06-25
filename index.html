@@ -987,7 +987,9 @@ function filterGroup(g){activeGroup=g;document.querySelectorAll('.gf-btn').forEa
 
 function renderPicks(){
   const champLocked=isChampLocked();
-  document.getElementById('btn-save-wrap').style.display='block';
+  // Only show save button if there are unlocked matches remaining
+  const hasUnlocked=Object.values(GROUPS).some(g=>g.matches.some(m=>!isMatchLocked(m)));
+  document.getElementById('btn-save-wrap').style.display=hasUnlocked?'block':'none';
   document.getElementById('picks-save-msg').style.display='none';
   let ch=`<div class="champion-card"><div class="champion-title">${champLocked?'🔒 ':''} Campeón del Mundial</div><div class="champion-sub">${champLocked?'Cierre alcanzado':'+5 puntos — la apuesta más valiosa'}</div><select class="champion-select" id="pick-champ" ${champLocked?'disabled':''} onchange="updatePts()"><option value="">-- Selecciona el campeón --</option>`;
   for(const t of ALL_TEAMS)ch+=`<option value="${t}" ${userPicks['champ']===t?'selected':''}>${flag(t)} ${t}</option>`;
@@ -1193,9 +1195,19 @@ function calcExact(uid,picks,koPicks){
 
 // ─── SAVE ─────────────────────────────────────────────────────────────────────
 async function savePicks(){
-  const picks=collectPicks();let total=0,done=0;
-  for(const g of Object.values(GROUPS)){total+=g.matches.length;for(const m of g.matches){if(picks[m.key])done++;}}
-  if(done<total){if(!confirm(`Faltan ${total-done} partidos. ¿Guardar igual?`))return;}
+  const picks=collectPicks();
+  // Protect locked matches: revert any pick for a match that has already started
+  for(const g of Object.values(GROUPS)){
+    for(const m of g.matches){
+      if(isMatchLocked(m)){
+        if(userPicks[m.key]) picks[m.key]=userPicks[m.key];
+        else delete picks[m.key];
+      }
+    }
+  }
+  let total=0,done=0;
+  for(const g of Object.values(GROUPS)){for(const m of g.matches){if(!isMatchLocked(m)){total++;if(picks[m.key])done++;}}}
+  if(done<total){if(!confirm(`Faltan ${total-done} partidos sin resultado. ¿Guardar igual?`))return;}
   else{if(!confirm('¿Confirmas tus picks? No podrás cambiarlos.'))return;}
   const btn=document.getElementById('btn-save-picks');btn.disabled=true;btn.textContent='Guardando...';
   userPicks=picks; // Update local copy so next save keeps these
@@ -1218,6 +1230,19 @@ async function saveSpecial(){
 }
 async function saveKoPicks(){
   const koPicks=collectKoPicks();
+  // Protect locked KO matches: revert picks for matches that have already started
+  KO_STRUCTURE.forEach(round=>{
+    for(let s=0;s<round.count;s++){
+      if(isKoMatchLocked(round.key,s)){
+        const key=getKoMatchKey(round.key,s);
+        ['_h','_a'].forEach(sfx=>{
+          const k=key+sfx;
+          if(userKoPicks[k]!==undefined) koPicks[k]=userKoPicks[k];
+          else delete koPicks[k];
+        });
+      }
+    }
+  });
   if(Object.keys(koPicks).length===0){showGoool('warning','🟡','Tarjeta amarilla','No has ingresado ningún pick de eliminatoria todavía.','');return;}
   if(!confirm('¿Confirmas tus picks de eliminatoria?'))return;
   const btn=document.getElementById('btn-save-ko');btn.disabled=true;btn.textContent='Guardando...';
