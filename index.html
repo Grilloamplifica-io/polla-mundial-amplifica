@@ -195,6 +195,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .b-conn-r32-top .b-conn-top{border-right:none;}
 .b-conn-r32-bot .b-conn-bot{border-right:none;}
 .b-pair-group{background:rgba(99,102,241,0.06);border:1.5px solid #c5d0ff;border-radius:10px;padding:4px 4px 4px 6px;}
+.b-pen-row{background:#f8f9ff;border-top:1px dashed #e0e4f4;padding:3px 8px;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.b-pen-result{font-size:9px;font-weight:700;color:var(--text2);}
+.b-pen-pick{font-size:9px;color:var(--text3);font-style:italic;}
 .b-champ{background:linear-gradient(135deg,#0d1140,#1a1060);border:2px solid var(--amp-yellow);border-radius:10px;width:140px;padding:10px;text-align:center;}
 .b-champ-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:var(--amp-yellow);text-transform:uppercase;margin-bottom:6px;}
 .b-champ select{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--amp-yellow);font-size:11px;background:#fff;color:#1d1d1f;font-family:'Inter',sans-serif;}
@@ -1161,12 +1164,29 @@ function renderKo(){
       html+=`<div class="b-team"><span class="b-team-flag">${tB.flag}</span><span class="b-team-name${tB.tbd?' tbd':''}">${tB.name}</span>`;
       const sB=rA!==null?rA:(pA!==''?pA:'');if(sB!=='')html+=`<span class="b-team-score${rA!==null&&parseInt(rA)>parseInt(rH)?' winner-score':''}">${sB}</span>`;
       html+=`</div>`;
+      // Penalty data
+      const pPen=userKoPicks[key+'_pen']??'';const rPen=DB.ko[key+'_pen']??'';
+      const rPenH=DB.ko[key+'_pen_h']??'';const rPenA=DB.ko[key+'_pen_a']??'';
+      // Penalty badge for picks
+      let penBadge='';
+      if(rPen!==''){
+        // Result exists: show real penalty result
+        const penCorrect=pPen===rPen;
+        const penExact=pPen==='1'&&rPen==='1'&&userKoPicks[key+'_pen_h']===rPenH&&userKoPicks[key+'_pen_a']===rPenA;
+        const penLabel=rPen==='1'?`🥅 ${rPenH}-${rPenA}`:'Sin penales';
+        const penPts=penExact?'+3pen':penCorrect?'+1pen':'0pen';
+        penBadge=`<div class="b-pen-row"><span class="b-pen-result">${penLabel}</span><span class="b-match-pts ${penExact?'exact':penCorrect?'winner-pts':'miss'}" style="font-size:8px;">${penPts}</span></div>`;
+      } else if(pPen!==''){
+        // No result yet, show user's penalty pick
+        const penPickLabel=pPen==='1'?`🥅 ${userKoPicks[key+'_pen_h']??'?'}-${userKoPicks[key+'_pen_a']??'?'}`:'Sin penales';
+        penBadge=`<div class="b-pen-row"><span class="b-pen-pick">${penPickLabel}</span></div>`;
+      }
       html+=`<div class="b-match-footer">`;
       const timeDisplay=timeLabel?(locked?'🔒 ':'')+timeLabel:(locked?'🔒 Cerrado':'');
       html+=`<span class="b-match-time">${timeDisplay||'<span style="font-style:italic;color:var(--text3)">Sin hora</span>'}</span>`;
       if(rH!==null&&ptsBadge)html+=`<span class="b-match-pts ${ptsBadge}">${ptsBadge==='exact'?'+3':ptsBadge==='winner-pts'?'+1':'0'} pts</span>`;
       else if(rH===null&&!locked&&pH!=='')html+=`<span class="b-match-pts" style="color:var(--text3);font-size:8px;">${tT.flag}${pH}-${pA}${tB.flag}</span>`;
-      html+=`</div></div>`;
+      html+=`</div>${penBadge}</div>`;
       // Right connector: for R32 use pair-aware connectors, otherwise standard
       if(isR32){
         html+=`<div class="b-conn b-conn-r32${m%2===0?'-top':'-bot'}"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
@@ -1192,16 +1212,77 @@ function renderKo(){
 function openKoModal(key,label,nameH,nameA,flagH,flagA){
   const ex=document.getElementById('ko-modal');if(ex)ex.remove();
   const pH=userKoPicks[key+'_h']??'';const pA=userKoPicks[key+'_a']??'';
+  const pPen=userKoPicks[key+'_pen']??'';
+  const pPenH=userKoPicks[key+'_pen_h']??'';const pPenA=userKoPicks[key+'_pen_a']??'';
   const ov=document.createElement('div');ov.id='ko-modal';ov.className='ko-modal-overlay';
-  ov.innerHTML=`<div class="ko-modal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><div class="ko-modal-title">⚽ ${label}</div><button onclick="document.getElementById('ko-modal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button></div><div style="font-size:11px;color:var(--text2);margin-bottom:14px;">¿Cuál será el marcador?</div><div class="ko-modal-teams"><div class="ko-modal-team"><span class="ko-modal-flag">${flagH}</span><span class="ko-modal-name">${nameH}</span></div><div class="ko-modal-score"><input class="ko-modal-input" id="ko-h" type="number" min="0" max="20" value="${pH}" placeholder="0"/><span class="ko-modal-sep">:</span><input class="ko-modal-input" id="ko-a" type="number" min="0" max="20" value="${pA}" placeholder="0"/></div><div class="ko-modal-team"><span class="ko-modal-flag">${flagA}</span><span class="ko-modal-name">${nameA}</span></div></div><div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:14px;">En eliminatoria no hay empate — indica quién gana.</div><button onclick="confirmKoPick('${key}')" style="width:100%;padding:12px;background:var(--amp-blue);color:#fff;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:1px;cursor:pointer;">CONFIRMAR PICK</button></div>`;
+  ov.innerHTML=`<div class="ko-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="ko-modal-title">⚽ ${label}</div>
+      <button onclick="document.getElementById('ko-modal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:14px;">¿Cuál será el marcador? (tiempo reglamentario)</div>
+    <div class="ko-modal-teams">
+      <div class="ko-modal-team"><span class="ko-modal-flag">${flagH}</span><span class="ko-modal-name">${nameH}</span></div>
+      <div class="ko-modal-score">
+        <input class="ko-modal-input" id="ko-h" type="number" min="0" max="20" value="${pH}" placeholder="0"/>
+        <span class="ko-modal-sep">:</span>
+        <input class="ko-modal-input" id="ko-a" type="number" min="0" max="20" value="${pA}" placeholder="0"/>
+      </div>
+      <div class="ko-modal-team"><span class="ko-modal-flag">${flagA}</span><span class="ko-modal-name">${nameA}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:14px;">En eliminatoria no hay empate — indica quién gana.</div>
+    <div style="border-top:1px solid #eee;padding-top:12px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:10px;text-align:center;">🥅 ¿El partido va a penales?</div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="pen-btn-no" onclick="setKoPenPick(0)" class="pen-pick-btn${pPen==='0'?' pen-active':''}" style="flex:1;padding:9px 0;border-radius:8px;border:2px solid ${pPen==='0'?'var(--amp-blue)':'var(--border)'};background:${pPen==='0'?'#eef2ff':'#fff'};font-size:13px;font-weight:700;cursor:pointer;color:${pPen==='0'?'var(--amp-blue)':'var(--text2)'};">❌ No</button>
+        <button id="pen-btn-yes" onclick="setKoPenPick(1)" class="pen-pick-btn${pPen==='1'?' pen-active':''}" style="flex:1;padding:9px 0;border-radius:8px;border:2px solid ${pPen==='1'?'var(--amp-blue)':'var(--border)'};background:${pPen==='1'?'#eef2ff':'#fff'};font-size:13px;font-weight:700;cursor:pointer;color:${pPen==='1'?'var(--amp-blue)':'var(--text2)'};">🥅 Sí</button>
+      </div>
+      <input type="hidden" id="ko-pen-val" value="${pPen}"/>
+      <div id="pen-score-wrap" style="display:${pPen==='1'?'block':'none'};margin-top:12px;">
+        <div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:8px;">Marcador en penales:</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span style="font-size:11px;color:var(--text2);">${flagH}</span>
+          <input class="ko-modal-input" id="ko-pen-h" type="number" min="0" max="20" value="${pPenH}" placeholder="0"/>
+          <span class="ko-modal-sep">:</span>
+          <input class="ko-modal-input" id="ko-pen-a" type="number" min="0" max="20" value="${pPenA}" placeholder="0"/>
+          <span style="font-size:11px;color:var(--text2);">${flagA}</span>
+        </div>
+      </div>
+    </div>
+    <button onclick="confirmKoPick('${key}')" style="width:100%;padding:12px;background:var(--amp-blue);color:#fff;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:1px;cursor:pointer;">CONFIRMAR PICK</button>
+  </div>`;
   ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
   document.body.appendChild(ov);
   document.getElementById('ko-h').focus();
+}
+function setKoPenPick(val){
+  document.getElementById('ko-pen-val').value=val;
+  const isYes=val===1;
+  ['pen-btn-no','pen-btn-yes'].forEach((id,i)=>{
+    const btn=document.getElementById(id);if(!btn)return;
+    const active=(i===0&&!isYes)||(i===1&&isYes);
+    btn.style.border=`2px solid ${active?'var(--amp-blue)':'var(--border)'}`;
+    btn.style.background=active?'#eef2ff':'#fff';
+    btn.style.color=active?'var(--amp-blue)':'var(--text2)';
+  });
+  document.getElementById('pen-score-wrap').style.display=isYes?'block':'none';
 }
 function confirmKoPick(key){
   const h=document.getElementById('ko-h')?.value;const a=document.getElementById('ko-a')?.value;
   if(h!==''&&h!==undefined)userKoPicks[key+'_h']=h;
   if(a!==''&&a!==undefined)userKoPicks[key+'_a']=a;
+  const penVal=document.getElementById('ko-pen-val')?.value??'';
+  if(penVal!==''){
+    userKoPicks[key+'_pen']=penVal;
+    if(penVal==='1'){
+      const ph=document.getElementById('ko-pen-h')?.value??'';
+      const pa=document.getElementById('ko-pen-a')?.value??'';
+      if(ph!=='')userKoPicks[key+'_pen_h']=ph; else delete userKoPicks[key+'_pen_h'];
+      if(pa!=='')userKoPicks[key+'_pen_a']=pa; else delete userKoPicks[key+'_pen_a'];
+    } else {
+      delete userKoPicks[key+'_pen_h'];delete userKoPicks[key+'_pen_a'];
+    }
+  }
   document.getElementById('ko-modal')?.remove();
   renderKo();
 }
@@ -1214,7 +1295,7 @@ function calcScore(uid,picks,koPicks,special){
   picks=picks||DB.users[uid]?.picks||{};koPicks=koPicks||DB.users[uid]?.koPicks||{};special=special||DB.users[uid]?.special||{};
   if(picks['champ']&&DB.results['champ']&&picks['champ']===DB.results['champ'])pts+=5;
   for(const g of Object.values(GROUPS)){for(const m of g.matches){if(!picks[m.key]||!DB.results[m.key])continue;const ph=parseInt(picks[m.key][0]),pa=parseInt(picks[m.key][1]),rh=parseInt(DB.results[m.key][0]),ra=parseInt(DB.results[m.key][1]);if(ph===rh&&pa===ra)pts+=3;else if((ph>pa&&rh>ra)||(ph<pa&&rh<ra)||(ph===pa&&rh===ra))pts+=1;}}
-  KO_STRUCTURE.forEach(round=>{for(let m=0;m<round.count;m++){const key=getKoMatchKey(round.key,m);const pH=koPicks[key+'_h'],pA=koPicks[key+'_a'],rH=DB.ko[key+'_h'],rA=DB.ko[key+'_a'];if(pH===undefined||rH===undefined)continue;const phi=parseInt(pH),pai=parseInt(pA),rhi=parseInt(rH),rai=parseInt(rA);if(phi===rhi&&pai===rai)pts+=3;else if((phi>pai&&rhi>rai)||(phi<pai&&rhi<rai))pts+=1;}});
+  KO_STRUCTURE.forEach(round=>{for(let m=0;m<round.count;m++){const key=getKoMatchKey(round.key,m);const pH=koPicks[key+'_h'],pA=koPicks[key+'_a'],rH=DB.ko[key+'_h'],rA=DB.ko[key+'_a'];if(pH===undefined||rH===undefined)continue;const phi=parseInt(pH),pai=parseInt(pA),rhi=parseInt(rH),rai=parseInt(rA);if(phi===rhi&&pai===rai)pts+=3;else if((phi>pai&&rhi>rai)||(phi<pai&&rhi<rai))pts+=1;const pPen=koPicks[key+'_pen'],rPen=DB.ko[key+'_pen'];if(pPen!==undefined&&rPen!==undefined){if(pPen===rPen)pts+=1;if(pPen==='1'&&rPen==='1'){const ppH=koPicks[key+'_pen_h'],ppA=koPicks[key+'_pen_a'],rpH=DB.ko[key+'_pen_h'],rpA=DB.ko[key+'_pen_a'];if(ppH!==undefined&&rpH!==undefined&&ppH===rpH&&ppA===rpA)pts+=2;}}}});
   if(koPicks['ko_champ']&&DB.ko['ko_champ']&&koPicks['ko_champ']===DB.ko['ko_champ'])pts+=5;
   if(special.scorer&&DB.results.scorer&&special.scorer.toLowerCase()===DB.results.scorer.toLowerCase())pts+=5;
   ['p1','p2','p3'].forEach(k=>{if(special[k]&&DB.results[k]&&special[k]===DB.results[k])pts+=3;});
@@ -1270,7 +1351,7 @@ async function saveKoPicks(){
     for(let s=0;s<round.count;s++){
       if(isKoMatchLocked(round.key,s)){
         const key=getKoMatchKey(round.key,s);
-        ['_h','_a'].forEach(sfx=>{
+        ['_h','_a','_pen','_pen_h','_pen_a'].forEach(sfx=>{
           const k=key+sfx;
           if(userKoPicks[k]!==undefined) koPicks[k]=userKoPicks[k];
           else delete koPicks[k];
@@ -1331,7 +1412,29 @@ function renderAdmin(){
       const key=getKoMatchKey(round.key,s);
       const tT=getKoTeam(round.key,s,0);const tB=getKoTeam(round.key,s,1);
       const rh=DB.ko[key+'_h']||'';const ra=DB.ko[key+'_a']||'';
-      koHtml+=`<div class="admin-match"><div style="font-size:11px;text-align:right;">${tT.flag} ${tT.name}</div><div style="display:flex;align-items:center;gap:4px;"><input class="admin-score" type="number" min="0" max="20" value="${rh}" id="ko-rh-${key}"/><span style="font-size:14px;color:var(--text2);">:</span><input class="admin-score" type="number" min="0" max="20" value="${ra}" id="ko-ra-${key}"/></div><div style="font-size:11px;">${tB.flag} ${tB.name}</div></div>`;
+      const rpen=DB.ko[key+'_pen']||'';const rpenH=DB.ko[key+'_pen_h']||'';const rpenA=DB.ko[key+'_pen_a']||'';
+      koHtml+=`<div class="admin-match" style="flex-wrap:wrap;gap:4px;">
+        <div style="font-size:11px;text-align:right;flex:1;">${tT.flag} ${tT.name}</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input class="admin-score" type="number" min="0" max="20" value="${rh}" id="ko-rh-${key}"/>
+          <span style="font-size:14px;color:var(--text2);">:</span>
+          <input class="admin-score" type="number" min="0" max="20" value="${ra}" id="ko-ra-${key}"/>
+        </div>
+        <div style="font-size:11px;flex:1;">${tB.flag} ${tB.name}</div>
+        <div style="width:100%;display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:var(--text2);font-weight:600;">🥅 Penales:</span>
+          <select id="ko-pen-${key}" onchange="document.getElementById('ko-pen-score-${key}').style.display=this.value==='1'?'flex':'none'" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;">
+            <option value="">--</option>
+            <option value="0" ${rpen==='0'?'selected':''}>No</option>
+            <option value="1" ${rpen==='1'?'selected':''}>Sí</option>
+          </select>
+          <div id="ko-pen-score-${key}" style="display:${rpen==='1'?'flex':'none'};align-items:center;gap:4px;">
+            <input class="admin-score" type="number" min="0" max="20" value="${rpenH}" id="ko-pen-rh-${key}" placeholder="0"/>
+            <span style="font-size:12px;color:var(--text2);">:</span>
+            <input class="admin-score" type="number" min="0" max="20" value="${rpenA}" id="ko-pen-ra-${key}" placeholder="0"/>
+          </div>
+        </div>
+      </div>`;
     }
     koHtml+=`</div>`;
   });
@@ -1474,6 +1577,14 @@ async function saveManualResults(){
       if(h&&a&&h.value!==''&&a.value!==''){
         DB.ko[key+'_h']=h.value;
         DB.ko[key+'_a']=a.value;
+      }
+      const pen=document.getElementById('ko-pen-'+key);
+      if(pen&&pen.value!==''){
+        DB.ko[key+'_pen']=pen.value;
+        if(pen.value==='1'){
+          const ph=document.getElementById('ko-pen-rh-'+key);const pa=document.getElementById('ko-pen-ra-'+key);
+          if(ph&&pa&&ph.value!==''&&pa.value!==''){DB.ko[key+'_pen_h']=ph.value;DB.ko[key+'_pen_a']=pa.value;}
+        }
       }
       // Si vacío, NO borra resultado anterior
     }
