@@ -515,7 +515,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </div>
         <button class="btn-auto" id="btn-auto-update" onclick="autoUpdateResults()"><i class="ti ti-refresh"></i> Actualizar resultados grupos</button>
-        <button class="btn-auto" id="btn-auto-ko" onclick="autoLoadKOTeams()" style="border-color:#a855f7;color:#e9d5ff;"><i class="ti ti-tournament"></i> Cargar clasificados eliminatoria</button>
+        <button class="btn-auto" id="btn-auto-ko" onclick="autoLoadKOTeams()" style="border-color:#a855f7;color:#e9d5ff;"><i class="ti ti-tournament"></i> Cargar clasificados eliminatoria (IA)</button>
+        <button class="btn-auto" id="btn-load-r32" onclick="loadBracketR32()" style="border-color:#22c55e;color:#bbf7d0;"><i class="ti ti-list-check"></i> Cargar bracket 16avos (datos reales)</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1342,6 +1343,41 @@ async function autoUpdateResults(){
     renderAdmin();renderRanking();buildTicker();fetchTrend();if(currentUser)renderMatchSection();
   }catch(err){addLog('Error: '+err.message,'err');doneEl.innerHTML=`<div class="alert alert-error">Error: ${err.message}</div>`;doneEl.style.display='block';}
   btn.disabled=false;statusEl.style.display='none';
+}
+
+async function loadBracketR32(){
+  if(!confirm('¿Cargar el bracket de 16avos de final con los datos reales del Mundial 2026?'))return;
+  const btn=document.getElementById('btn-load-r32');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
+  // Bracket 16avos FIFA World Cup 2026 — fuente: Wikipedia (horarios UTC verificados)
+  const R32=[
+    {match:0,top:'Sudáfrica',bottom:'Canadá',utc:'2026-06-28T19:00:00Z'},
+    {match:1,top:'Alemania',bottom:'Paraguay',utc:'2026-06-29T20:30:00Z'},
+    {match:2,top:'Países Bajos',bottom:'Marruecos',utc:'2026-06-29T01:00:00Z'},
+    {match:3,top:'Brasil',bottom:'Japón',utc:'2026-06-29T17:00:00Z'},
+    {match:4,top:'Francia',bottom:'Suecia',utc:'2026-06-30T21:00:00Z'},
+    {match:5,top:'Costa de Marfil',bottom:'Noruega',utc:'2026-06-30T17:00:00Z'},
+    {match:6,top:'México',bottom:'Ecuador',utc:'2026-07-01T01:00:00Z'},
+    {match:7,top:'Inglaterra',bottom:'RD Congo',utc:'2026-07-01T16:00:00Z'},
+    {match:8,top:'EE.UU.',bottom:'Bosnia y Herz.',utc:'2026-07-01T00:00:00Z'},
+    {match:9,top:'Bélgica',bottom:'Senegal',utc:'2026-07-01T20:00:00Z'},
+    {match:10,top:'Portugal',bottom:'Croacia',utc:'2026-07-02T23:00:00Z'},
+    {match:11,top:'España',bottom:'Austria',utc:'2026-07-02T19:00:00Z'},
+    {match:12,top:'Suiza',bottom:'Argelia',utc:'2026-07-03T03:00:00Z'},
+    {match:13,top:'Argentina',bottom:'Cabo Verde',utc:'2026-07-03T22:00:00Z'},
+    {match:14,top:'Colombia',bottom:'Ghana',utc:'2026-07-03T01:30:00Z'},
+    {match:15,top:'Australia',bottom:'Egipto',utc:'2026-07-03T18:00:00Z'},
+  ];
+  for(const t of R32){
+    DB.ko[`ko_team_r32_${t.match}_0`]=t.top;
+    DB.ko[`ko_team_r32_${t.match}_1`]=t.bottom;
+    DB.ko[`ko_time_r32_${t.match}`]=t.utc;
+  }
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-list-check"></i> Cargar bracket 16avos (datos reales)';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Bracket de 16avos cargado correctamente (16 partidos).</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
 }
 
 async function autoLoadKOTeams(){
