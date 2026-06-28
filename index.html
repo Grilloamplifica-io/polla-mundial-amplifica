@@ -1339,7 +1339,9 @@ async function saveSpecial(){
   if(!confirm('¿Confirmas tus apuestas especiales?'))return;
   const btn=document.getElementById('btn-save-special');btn.disabled=true;btn.textContent='Guardando...';
   DB.users[currentUser.uid]={...(DB.users[currentUser.uid]||{}),name:currentUser.name,area:currentUser.area,special,specialLocked:true};
-  await dbSave();btn.disabled=false;btn.textContent='Guardar apuestas especiales';
+  await dbSave();
+  userSpecial=special;
+  btn.disabled=false;btn.textContent='Guardar apuestas especiales';
   document.getElementById('btn-special-save-wrap').style.display='none';
   showGoool('success','🎯','¡Bien jugado!','Apuestas especiales guardadas correctamente','renderSpecial');
   renderRanking();buildTicker();fetchTrend();
