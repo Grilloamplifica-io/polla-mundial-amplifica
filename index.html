@@ -1111,6 +1111,16 @@ function getKoTeam(rk,matchIdx,side){
   return {name:'Clasificado',flag:'🏳️',tbd:true};
 }
 function isKoMatchLocked(rk,idx){const t=DB.ko[`ko_time_${rk}_${idx}`];return t?new Date()>=new Date(t):false;}
+function formatKoTime(utcStr){
+  if(!utcStr)return '';
+  const d=new Date(utcStr);
+  const clt=new Date(d.getTime()-4*60*60*1000);
+  const days=['dom.','lun.','mar.','mié.','jue.','vie.','sáb.'];
+  const months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const h=String(clt.getUTCHours()).padStart(2,'0');
+  const min=String(clt.getUTCMinutes()).padStart(2,'0');
+  return `${days[clt.getUTCDay()]} ${clt.getUTCDate()} ${months[clt.getUTCMonth()]} · ${h}:${min}`;
+}
 
 function renderKo(){
   document.getElementById('ko-save-msg').style.display='none';
@@ -1123,6 +1133,7 @@ function renderKo(){
       const key=getKoMatchKey(round.key,m);
       const tT=getKoTeam(round.key,m,0);const tB=getKoTeam(round.key,m,1);
       const locked=isKoMatchLocked(round.key,m);
+      const koTime=DB.ko[`ko_time_${round.key}_${m}`];const timeLabel=formatKoTime(koTime);
       const pH=userKoPicks[key+'_h']??'';const pA=userKoPicks[key+'_a']??'';
       const rH=DB.ko[key+'_h']??null;const rA=DB.ko[key+'_a']??null;
       let ptsBadge='';
@@ -1151,10 +1162,10 @@ function renderKo(){
       const sB=rA!==null?rA:(pA!==''?pA:'');if(sB!=='')html+=`<span class="b-team-score${rA!==null&&parseInt(rA)>parseInt(rH)?' winner-score':''}">${sB}</span>`;
       html+=`</div>`;
       html+=`<div class="b-match-footer">`;
-      if(locked&&rH===null)html+=`<span class="b-match-time">🔒 Cerrado</span>`;
-      else if(!tT.tbd&&!tB.tbd)html+=`<span class="b-match-time">${pH!==''?tT.flag+' '+pH+'-'+pA+' '+tB.flag:'Toca para apostar'}</span>`;
-      else html+=`<span class="b-match-time" style="font-style:italic;">Esperando clasificados</span>`;
-      if(ptsBadge)html+=`<span class="b-match-pts ${ptsBadge}">${ptsBadge==='exact'?'+3':ptsBadge==='winner-pts'?'+1':'0'} pts</span>`;
+      const timeDisplay=timeLabel?(locked?'🔒 ':'')+timeLabel:(locked?'🔒 Cerrado':'');
+      html+=`<span class="b-match-time">${timeDisplay||'<span style="font-style:italic;color:var(--text3)">Sin hora</span>'}</span>`;
+      if(rH!==null&&ptsBadge)html+=`<span class="b-match-pts ${ptsBadge}">${ptsBadge==='exact'?'+3':ptsBadge==='winner-pts'?'+1':'0'} pts</span>`;
+      else if(rH===null&&!locked&&pH!=='')html+=`<span class="b-match-pts" style="color:var(--text3);font-size:8px;">${tT.flag}${pH}-${pA}${tB.flag}</span>`;
       html+=`</div></div>`;
       // Right connector: for R32 use pair-aware connectors, otherwise standard
       if(isR32){
