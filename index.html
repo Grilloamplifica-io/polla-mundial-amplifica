@@ -191,6 +191,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .b-conn-top{flex:1;border-right:2px solid #c5d0ff;}
 .b-conn-bot{flex:1;border-right:2px solid #c5d0ff;}
 .b-conn-mid{height:2px;background:#c5d0ff;width:16px;}
+/* R32 pair connectors: top match shows only bottom-half line, bot match shows only top-half line */
+.b-conn-r32-top .b-conn-top{border-right:none;}
+.b-conn-r32-bot .b-conn-bot{border-right:none;}
+.b-pair-group{background:rgba(99,102,241,0.06);border:1.5px solid #c5d0ff;border-radius:10px;padding:4px 4px 4px 6px;}
 .b-champ{background:linear-gradient(135deg,#0d1140,#1a1060);border:2px solid var(--amp-yellow);border-radius:10px;width:140px;padding:10px;text-align:center;}
 .b-champ-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:var(--amp-yellow);text-transform:uppercase;margin-bottom:6px;}
 .b-champ select{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--amp-yellow);font-size:11px;background:#fff;color:#1d1d1f;font-family:'Inter',sans-serif;}
@@ -1114,6 +1118,7 @@ function renderKo(){
   KO_STRUCTURE.forEach((round,ri)=>{
     const slotH=86;const gapFactor=Math.pow(2,ri);const gap=(gapFactor-1)*slotH;
     html+=`<div class="b-round"><div class="b-round-title">${round.label} (${round.count})</div>`;
+    const isR32=ri===0;
     for(let m=0;m<round.count;m++){
       const key=getKoMatchKey(round.key,m);
       const tT=getKoTeam(round.key,m,0);const tB=getKoTeam(round.key,m,1);
@@ -1122,7 +1127,18 @@ function renderKo(){
       const rH=DB.ko[key+'_h']??null;const rA=DB.ko[key+'_a']??null;
       let ptsBadge='';
       if(rH!==null&&pH!==''){const phi=parseInt(pH),pai=parseInt(pA),rhi=parseInt(rH),rai=parseInt(rA);if(phi===rhi&&pai===rai)ptsBadge='exact';else if((phi>pai&&rhi>rai)||(phi<pai&&rhi<rai))ptsBadge='winner-pts';else ptsBadge='miss';}
-      if(m>0)html+=`<div style="height:${gap}px;"></div>`;
+      // For R32: open pair wrapper on even match, add inter-pair gap before even match>0
+      if(isR32){
+        if(m%2===0){
+          if(m>0)html+=`<div style="height:8px;"></div>`;
+          const pairLabel=`1/8 P${Math.floor(m/2)+1}`;
+          html+=`<div class="b-pair-group">`;
+        } else {
+          html+=`<div style="height:2px;"></div>`;
+        }
+      } else {
+        if(m>0)html+=`<div style="height:${gap}px;"></div>`;
+      }
       html+=`<div class="b-match-wrap">`;
       if(ri>0)html+=`<div class="b-conn"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
       const canClick=!locked&&(!tT.tbd||!tB.tbd);
@@ -1140,8 +1156,15 @@ function renderKo(){
       else html+=`<span class="b-match-time" style="font-style:italic;">Esperando clasificados</span>`;
       if(ptsBadge)html+=`<span class="b-match-pts ${ptsBadge}">${ptsBadge==='exact'?'+3':ptsBadge==='winner-pts'?'+1':'0'} pts</span>`;
       html+=`</div></div>`;
-      if(ri<KO_STRUCTURE.length-1)html+=`<div class="b-conn"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
+      // Right connector: for R32 use pair-aware connectors, otherwise standard
+      if(isR32){
+        html+=`<div class="b-conn b-conn-r32${m%2===0?'-top':'-bot'}"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
+      } else if(ri<KO_STRUCTURE.length-1){
+        html+=`<div class="b-conn"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
+      }
       html+=`</div>`;
+      // For R32: close pair wrapper after odd match
+      if(isR32&&m%2===1) html+=`</div>`;
     }
     html+=`</div>`;
   });
