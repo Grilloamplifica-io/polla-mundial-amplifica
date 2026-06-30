@@ -527,6 +527,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <button class="btn-auto" id="btn-fix-times" onclick="fixR32Times()" style="border-color:#f59e0b;color:#fde68a;"><i class="ti ti-clock-edit"></i> Corregir horarios 16avos (P3/P9/P15)</button>
         <button class="btn-auto" id="btn-load-r32-results" onclick="loadR32Results()" style="border-color:#f472b6;color:#fce7f3;"><i class="ti ti-circle-check"></i> Cargar resultados 16avos jugados</button>
         <button class="btn-auto" id="btn-load-r16" onclick="loadBracketR16()" style="border-color:#818cf8;color:#e0e7ff;"><i class="ti ti-trophy"></i> Cargar bracket octavos (R16)</button>
+        <button class="btn-auto" id="btn-fix-r16-teams" onclick="fixR16Teams()" style="border-color:#f97316;color:#fed7aa;"><i class="ti ti-shield-check"></i> Fijar equipos octavos (Canadá/Marruecos/Paraguay/Brasil)</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1553,8 +1554,26 @@ async function loadBracketR32(){
   renderKo();renderAdmin();buildTicker();
 }
 
+async function fixR16Teams(){
+  const btn=document.getElementById('btn-fix-r16-teams');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Fijando...';
+  // Forzar equipos clasificados directamente en DB (bypass de _koWinner)
+  DB.ko['ko_team_r16_0_0']='Canadá';
+  DB.ko['ko_team_r16_0_1']='Marruecos';
+  DB.ko['ko_team_r16_1_0']='Paraguay';
+  DB.ko['ko_team_r16_2_0']='Brasil';
+  // Resultados R32 que los originan (para scoring)
+  DB.ko['ko_r32_0_h']='0';DB.ko['ko_r32_0_a']='1';
+  DB.ko['ko_r32_1_h']='1';DB.ko['ko_r32_1_a']='1';DB.ko['ko_r32_1_pen']='1';DB.ko['ko_r32_1_pen_h']='3';DB.ko['ko_r32_1_pen_a']='4';
+  DB.ko['ko_r32_2_h']='1';DB.ko['ko_r32_2_a']='1';DB.ko['ko_r32_2_pen']='1';DB.ko['ko_r32_2_pen_h']='2';DB.ko['ko_r32_2_pen_a']='3';
+  DB.ko['ko_r32_3_h']='2';DB.ko['ko_r32_3_a']='1';
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-shield-check"></i> Fijar equipos octavos (Canadá/Marruecos/Paraguay/Brasil)';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Equipos fijados: Canadá · Marruecos · Paraguay · Brasil</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
 async function loadR32Results(){
-  if(!confirm('¿Cargar los 4 resultados de 16avos ya jugados? (Canadá, Paraguay, Marruecos, Brasil)'))return;
   const btn=document.getElementById('btn-load-r32-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
   // P1: Sudáfrica 0-1 Canadá
   DB.ko['ko_r32_0_h']='0';DB.ko['ko_r32_0_a']='1';
