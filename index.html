@@ -1103,27 +1103,49 @@ function renderSpecial(){
 
 // ─── KO BRACKET ───────────────────────────────────────────────────────────────
 function getKoMatchKey(rk,idx){return `ko_${rk}_${idx}`;}
+// Bracket FIFA 2026: qué dos partidos de 16avos alimentan a cada octavo
+// r16_N = [r32_top, r32_bot]
+const R16_FROM_R32=[[0,2],[1,4],[3,5],[6,7],[11,10],[9,8],[15,13],[12,14]];
+
+function _koWinner(rk,idx){
+  // Devuelve el equipo ganador de un partido KO (considera penales). null si sin resultado.
+  const key=getKoMatchKey(rk,idx);
+  const tH=getKoTeam(rk,idx,0),tA=getKoTeam(rk,idx,1);
+  const rH=DB.ko[key+'_h'],rA=DB.ko[key+'_a'];
+  if(rH===undefined||rA===undefined)return null;
+  let w=parseInt(rH)>parseInt(rA)?tH:parseInt(rA)>parseInt(rH)?tA:null;
+  if(!w){const pH=DB.ko[key+'_pen_h'],pA=DB.ko[key+'_pen_a'];if(pH&&pA)w=parseInt(pH)>parseInt(pA)?tH:parseInt(pA)>parseInt(pH)?tA:null;}
+  return(w&&!w.tbd)?w:null;
+}
 function getKoTeam(rk,matchIdx,side){
-  // r32 y r16: lookup directo en DB (bracket FIFA no es secuencial entre rondas)
-  if(rk==='r32'||rk==='r16'){
-    const tk=`ko_team_${rk}_${matchIdx}_${side}`;const t=DB.ko[tk]||null;
+  if(rk==='r32'){
+    const t=DB.ko[`ko_team_r32_${matchIdx}_${side}`]||null;
     return t?{name:t,flag:flag(t),tbd:false}:{name:'Por definir',flag:'🏳️',tbd:true};
   }
-  // r8, r4, r2: derivar del ganador de la ronda anterior (pairing secuencial desde r16)
+  if(rk==='r16'){
+    // Primero: lookup explícito en DB (permite override manual)
+    const explicit=DB.ko[`ko_team_r16_${matchIdx}_${side}`];
+    if(explicit)return{name:explicit,flag:flag(explicit),tbd:false};
+    // Segundo: derivar automáticamente del ganador del R32 correspondiente
+    const r32idx=R16_FROM_R32[matchIdx]?.[side];
+    if(r32idx!==undefined){const w=_koWinner('r32',r32idx);if(w)return w;}
+    return{name:'Clasificado',flag:'🏳️',tbd:true};
+  }
+  // r8, r4, r2: derivar secuencialmente desde r16
   const ri=KO_STRUCTURE.findIndex(r=>r.key===rk);
   const prev=KO_STRUCTURE[ri-1];
   const prevIdx=matchIdx*2+side;
   const prevKey=getKoMatchKey(prev.key,prevIdx);
-  const tH=getKoTeam(prev.key,prevIdx,0);const tA=getKoTeam(prev.key,prevIdx,1);
+  const tH=getKoTeam(prev.key,prevIdx,0),tA=getKoTeam(prev.key,prevIdx,1);
   const rH=DB.ko[prevKey+'_h'],rA=DB.ko[prevKey+'_a'];
   if(rH!==undefined&&rA!==undefined){
     let w=parseInt(rH)>parseInt(rA)?tH:parseInt(rA)>parseInt(rH)?tA:null;
-    if(!w){const rpH=DB.ko[prevKey+'_pen_h'],rpA=DB.ko[prevKey+'_pen_a'];if(rpH&&rpA)w=parseInt(rpH)>parseInt(rpA)?tH:parseInt(rpA)>parseInt(rpH)?tA:null;}
+    if(!w){const pH=DB.ko[prevKey+'_pen_h'],pA=DB.ko[prevKey+'_pen_a'];if(pH&&pA)w=parseInt(pH)>parseInt(pA)?tH:parseInt(pA)>parseInt(pH)?tA:null;}
     if(w&&!w.tbd)return w;
   }
   const pH=userKoPicks[prevKey+'_h'],pA=userKoPicks[prevKey+'_a'];
   if(pH!==undefined&&pA!==undefined){const w=parseInt(pH)>parseInt(pA)?tH:parseInt(pA)>parseInt(pH)?tA:null;if(w&&!w.tbd)return w;}
-  return {name:'Clasificado',flag:'🏳️',tbd:true};
+  return{name:'Clasificado',flag:'🏳️',tbd:true};
 }
 function isKoMatchLocked(rk,idx){const t=DB.ko[`ko_time_${rk}_${idx}`];return t?new Date()>=new Date(t):false;}
 function formatKoTime(utcStr){
