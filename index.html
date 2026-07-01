@@ -1560,7 +1560,10 @@ async function fixR16Teams(){
   DB.ko['ko_team_r16_0_0']='Canadá';
   DB.ko['ko_team_r16_0_1']='Marruecos';
   DB.ko['ko_team_r16_1_0']='Paraguay';
+  DB.ko['ko_team_r16_1_1']='Francia';
   DB.ko['ko_team_r16_2_0']='Brasil';
+  DB.ko['ko_team_r16_2_1']='Noruega';
+  DB.ko['ko_team_r16_3_0']='México';
   // Resultados R32 que los originan (para scoring)
   DB.ko['ko_r32_0_h']='0';DB.ko['ko_r32_0_a']='1';
   DB.ko['ko_r32_1_h']='1';DB.ko['ko_r32_1_a']='1';DB.ko['ko_r32_1_pen']='1';DB.ko['ko_r32_1_pen_h']='3';DB.ko['ko_r32_1_pen_a']='4';
@@ -1569,7 +1572,7 @@ async function fixR16Teams(){
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-shield-check"></i> Fijar equipos octavos (Canadá/Marruecos/Paraguay/Brasil)';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Equipos fijados: Canadá · Marruecos · Paraguay · Brasil</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Equipos fijados: Canadá · Marruecos · Paraguay · Francia · Brasil · Noruega · México</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
@@ -1583,10 +1586,16 @@ async function loadR32Results(){
   DB.ko['ko_r32_2_h']='1';DB.ko['ko_r32_2_a']='1';DB.ko['ko_r32_2_pen']='1';DB.ko['ko_r32_2_pen_h']='2';DB.ko['ko_r32_2_pen_a']='3';
   // P4: Brasil 2-1 Japón
   DB.ko['ko_r32_3_h']='2';DB.ko['ko_r32_3_a']='1';
+  // P5: Francia 3-0 Suecia (30 jun)
+  DB.ko['ko_r32_4_h']='3';DB.ko['ko_r32_4_a']='0';
+  // P6: Costa de Marfil 1-2 Noruega (30 jun)
+  DB.ko['ko_r32_5_h']='1';DB.ko['ko_r32_5_a']='2';
+  // P7: México 2-0 Ecuador (30 jun / 01 jul CLT)
+  DB.ko['ko_r32_6_h']='2';DB.ko['ko_r32_6_a']='0';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados 16avos jugados';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Resultados cargados: Canadá 1-0 · Paraguay pen4-3 · Marruecos pen3-2 · Brasil 2-1</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> 7 resultados cargados: Canadá · Paraguay(p) · Marruecos(p) · Brasil · Francia · Noruega · México</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
@@ -1597,9 +1606,9 @@ async function loadBracketR16(){
   // Equipos ya clasificados (los demás quedan vacíos = Por definir hasta que se jueguen)
   const R16=[
     {match:0,top:'Canadá',bottom:'Marruecos',utc:'2026-07-04T17:00:00Z'},
-    {match:1,top:'Paraguay',bottom:'',utc:'2026-07-04T21:00:00Z'},
-    {match:2,top:'Brasil',bottom:'',utc:'2026-07-05T20:00:00Z'},
-    {match:3,top:'',bottom:'',utc:'2026-07-06T00:00:00Z'},
+    {match:1,top:'Paraguay',bottom:'Francia',utc:'2026-07-04T21:00:00Z'},
+    {match:2,top:'Brasil',bottom:'Noruega',utc:'2026-07-05T20:00:00Z'},
+    {match:3,top:'México',bottom:'',utc:'2026-07-06T00:00:00Z'},
     {match:4,top:'',bottom:'',utc:'2026-07-06T19:00:00Z'},
     {match:5,top:'',bottom:'',utc:'2026-07-07T00:00:00Z'},
     {match:6,top:'',bottom:'',utc:'2026-07-07T16:00:00Z'},
