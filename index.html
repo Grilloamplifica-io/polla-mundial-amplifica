@@ -429,7 +429,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
       <div class="special-card">
         <div class="special-title">⭐ Apuestas Especiales</div>
-        <div class="special-sub">Para todos — no necesitas saber de fútbol</div>
+        <div class="special-sub">Para todos — no necesitas saber de fútbol · Cierra dom 5 jul · 23:59</div>
         <div class="special-row">
           <label class="special-label">⚽ Goleador del torneo <span class="special-pts">+5 pts</span></label>
           <select class="special-select" id="pick-scorer" onchange="handleScorerChange()">
@@ -556,6 +556,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <div id="admin-msg" style="margin-top:8px;"></div>
       </div>
 
+      <!-- STATS + MENSAJE -->
+      <div class="card" style="background:#0a1a0a;border-color:rgba(34,197,94,0.3);">
+        <div class="card-title" style="color:#4ade80;">📊 Estadísticas y mensaje motivacional</div>
+        <div id="admin-stats-panel"></div>
+        <button class="btn-auto" onclick="renderAdminStats()" style="border-color:#4ade80;color:#bbf7d0;margin-top:10px;"><i class="ti ti-refresh"></i> Actualizar estadísticas</button>
+        <div id="admin-msg-whatsapp" style="display:none;margin-top:12px;">
+          <div style="font-size:12px;color:#4ade80;margin-bottom:6px;font-weight:600;">Mensaje para copiar (WhatsApp / Slack):</div>
+          <textarea id="admin-msg-text" rows="8" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(34,197,94,0.4);background:#0d1f0d;color:#d1fae5;font-size:12px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
+          <button onclick="navigator.clipboard.writeText(document.getElementById('admin-msg-text').value).then(()=>this.textContent='✅ Copiado!').catch(()=>{})" style="margin-top:6px;padding:7px 14px;background:#16a34a;border:none;border-radius:7px;color:#fff;font-size:12px;cursor:pointer;font-weight:600;">📋 Copiar mensaje</button>
+        </div>
+      </div>
+
       <!-- USER MANAGEMENT -->
       <div class="card">
         <div class="card-title">Gestión de participantes</div>
@@ -584,7 +596,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 // ─── FIREBASE CONFIG ─────────────────────────────────────────────────────────
 const DB_URL='https://polla-amplifica-default-rtdb.firebaseio.com';
 const DEADLINE=new Date('2026-06-11T19:00:00Z');
-const SPECIAL_DEADLINE=new Date('2026-07-01T16:00:00Z'); // mié 1 jul · 12:00 CLT
+const SPECIAL_DEADLINE=new Date('2026-07-06T03:59:00Z'); // dom 5 jul · 23:59 CLT
 
 const FLAGS={
   'México':'🇲🇽','Sudáfrica':'🇿🇦','Corea del Sur':'🇰🇷','Rep. Checa':'🇨🇿',
@@ -1481,6 +1493,7 @@ function renderAdmin(){
   koHtml+=`</select></div>`;
   document.getElementById('admin-ko-section').innerHTML=koHtml;
   renderAdminUserList();
+  renderAdminStats();
 }
 function toggleSec(id){document.getElementById(id).classList.toggle('open');}
 
@@ -1830,6 +1843,63 @@ function renderMisPicks(){
 
 // ─── ADMIN USER MANAGEMENT ────────────────────────────────────────────────────
 let adminEditUid = null;
+
+function renderAdminStats(){
+  const panel=document.getElementById('admin-stats-panel');
+  if(!panel)return;
+  const all=Object.entries(DB.users).filter(([uid])=>uid!==ADMIN_RUT);
+  const total=all.length;
+  const conEspeciales=all.filter(([,d])=>d.special&&(d.special.scorer||d.special.p1)).map(([,d])=>d.name);
+  const sinEspeciales=all.filter(([,d])=>!d.special||(!d.special.scorer&&!d.special.p1)).map(([,d])=>d.name);
+  const conKo=all.filter(([,d])=>d.koPicks&&Object.keys(d.koPicks).length>0).map(([,d])=>d.name);
+  const sinKo=all.filter(([,d])=>!d.koPicks||Object.keys(d.koPicks).length===0).map(([,d])=>d.name);
+
+  // Ranking snapshot
+  const rows=all.map(([uid,d])=>({name:d.name,area:d.area||'',pts:calcScore(uid,d.picks,d.koPicks,d.special)})).sort((a,b)=>b.pts-a.pts);
+
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+    <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#4ade80;">${conEspeciales.length}/${total}</div>
+      <div style="font-size:11px;color:#86efac;">Con apuestas especiales</div>
+    </div>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#f87171;">${sinEspeciales.length}</div>
+      <div style="font-size:11px;color:#fca5a5;">Sin apuestas especiales</div>
+    </div>
+    <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#818cf8;">${conKo.length}/${total}</div>
+      <div style="font-size:11px;color:#a5b4fc;">Con picks eliminatoria</div>
+    </div>
+    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;color:#fbbf24;">${sinKo.length}</div>
+      <div style="font-size:11px;color:#fde68a;">Sin picks eliminatoria</div>
+    </div>
+  </div>`;
+
+  if(sinEspeciales.length>0){
+    html+=`<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:6px;">⚠️ Sin apuestas especiales:</div>
+      <div style="font-size:12px;color:#fca5a5;">${sinEspeciales.join(' · ')}</div>
+    </div>`;
+  }
+
+  html+=`<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px;margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:700;color:#818cf8;margin-bottom:6px;">🏆 Ranking actual:</div>`;
+  rows.forEach((r,i)=>{
+    const medal=['🥇','🥈','🥉'][i]||`${i+1}.`;
+    html+=`<div style="display:flex;justify-content:space-between;font-size:12px;color:#c7d2fe;padding:2px 0;">${medal} <span style="flex:1;margin-left:6px;">${r.name}${r.area?' ('+r.area+')':''}</span><span style="font-weight:700;color:#e0e7ff;">${r.pts} pts</span></div>`;
+  });
+  html+=`</div>`;
+  panel.innerHTML=html;
+
+  // Generar mensaje WhatsApp
+  const deadlineStr='domingo 5 de julio a las 23:59';
+  const ranking3=rows.slice(0,3).map((r,i)=>['🥇','🥈','🥉'][i]+' '+r.name+' – '+r.pts+' pts').join('\n');
+  const pendientes=sinEspeciales.length>0?`\n⚠️ Faltan especiales: ${sinEspeciales.join(', ')}`:'\n✅ ¡Todos completaron las especiales!';
+  const msg=`🏆 *POLLA MUNDIAL AMPLIFICA* 🏆\n\n📊 *Ranking actual (${total} participantes):*\n${ranking3}${rows.length>3?'\n...y más':''}${pendientes}\n\n⭐ *¡Aún puedes completar tus Apuestas Especiales!*\nGoleador del torneo, campeón, podio — hasta *${deadlineStr}*.\n\nVale hasta *+11 puntos extra* y puedes remontar el ranking 🚀\n\nEntra en la app y ve a la pestaña ⭐ *Especiales* antes de que cierre 👇`;
+  document.getElementById('admin-msg-text').value=msg;
+  document.getElementById('admin-msg-whatsapp').style.display='block';
+}
 
 function renderAdminUserList(){
   const wrap = document.getElementById('admin-user-list');
