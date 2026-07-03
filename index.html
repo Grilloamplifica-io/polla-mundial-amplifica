@@ -1479,7 +1479,7 @@ function renderRanking(){
       if(idx>0&&sWithPicks[idx-1].pts!==r.pts)srank=idx+1;
       const medal=srank===1?`<div class="rank-medal medal-1">1</div>`:srank===2?`<div class="rank-medal medal-2">2</div>`:srank===3?`<div class="rank-medal medal-3">3</div>`:`<div class="rank-medal medal-n">${srank}</div>`;
       const chipsHtml=r.chips.map(c=>`<span style="display:inline-block;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.35);border-radius:20px;padding:1px 7px;font-size:10px;color:#e9d5ff;margin:1px 2px 1px 0;">${c}</span>`).join('');
-      shtml+=`<div class="ranking-row">${medal}<div style="flex:1;min-width:0;"><div class="rank-name">${r.name}${r.area?` <span style="font-size:10px;color:var(--text2);">(${r.area})</span>`:''}</div><div style="margin-top:3px;line-height:1.6;">${chipsHtml}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:#c4b5fd;"> pts</span></div></div>`;
+      shtml+=`<div class="ranking-row" style="border-bottom-color:rgba(168,85,247,0.2);">${medal}<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:#f3e8ff;">${r.name}${r.area?` <span style="font-size:10px;color:#c4b5fd;">(${r.area})</span>`:''}</div><div style="margin-top:3px;line-height:1.6;">${chipsHtml}</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:#e9d5ff;">${r.pts}<span style="font-size:12px;font-weight:400;color:#c4b5fd;"> pts</span></div></div>`;
     });
     if(sNoPicks.length>0){
       shtml+=`<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(168,85,247,0.2);font-size:11px;color:#a78bfa;">Sin completar: ${sNoPicks.map(r=>r.name).join(' · ')}</div>`;
