@@ -471,6 +471,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="special-save-msg" class="alert alert-success" style="display:none;"></div>
       <div id="special-locked-msg" class="alert alert-info" style="display:none;"><i class="ti ti-lock"></i> Apuestas especiales bloqueadas.</div>
       <div id="btn-special-save-wrap"><button class="btn-primary" id="btn-save-special" onclick="saveSpecial()">Guardar apuestas especiales</button></div>
+      <div class="card" style="background:linear-gradient(135deg,#1a0050,#2d0080);border-color:rgba(168,85,247,0.4);margin-top:16px;">
+        <div class="card-title" style="color:#e9d5ff;">⭐ Ranking Apuestas Especiales</div>
+        <div style="font-size:11px;color:#c4b5fd;margin-bottom:10px;">Competencia independiente — goleador y podio</div>
+        <div id="ranking-special-list-2"><div style="color:#c4b5fd;font-size:13px;text-align:center;padding:16px;">Cargando...</div></div>
+      </div>
     </div>
 
     <!-- KO -->
@@ -503,9 +508,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <!-- RANKING -->
     <div id="tab-ranking" class="container" style="display:none;">
       <div class="card">
-        <div class="card-title">Tabla de posiciones</div>
+        <div class="card-title">⚽ Ranking Principal</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Fase de grupos + Eliminatoria</div>
         <div id="ranking-list"><div style="color:var(--text2);font-size:14px;text-align:center;padding:24px;">Cargando...</div></div>
         <div id="last-updated-ranking" class="last-updated"></div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#1a0050,#2d0080);border-color:rgba(168,85,247,0.4);">
+        <div class="card-title" style="color:#e9d5ff;">⭐ Ranking Apuestas Especiales</div>
+        <div style="font-size:11px;color:#c4b5fd;margin-bottom:10px;">Goleador del torneo · Podio final — competencia independiente</div>
+        <div id="ranking-special-list"><div style="color:#c4b5fd;font-size:13px;text-align:center;padding:16px;">Cargando...</div></div>
       </div>
     </div>
 
@@ -1060,7 +1071,7 @@ function updatePts(){
   for(const g of Object.values(GROUPS)){total+=g.matches.length;for(const m of g.matches){const h=document.getElementById('h-'+m.key);const a=document.getElementById('a-'+m.key);if(h&&a&&h.value!==''&&a.value!=='')done++;}}
   document.getElementById('progress-text').textContent=`${done}/${total}`;
   document.getElementById('progress-fill').style.width=`${Math.round(done/total*100)}%`;
-  if(currentUser)document.getElementById('banner-pts').textContent=calcScore(currentUser.uid,collectPicks(),collectKoPicks(),collectSpecial())+' pts';
+  if(currentUser)document.getElementById('banner-pts').textContent=calcMainScore(currentUser.uid,collectPicks(),collectKoPicks())+' pts';
 }
 
 function collectPicks(){
@@ -1096,7 +1107,7 @@ function collectSpecial(){
   if(p1&&p1.value)sp.p1=p1.value;if(p2&&p2.value)sp.p2=p2.value;if(p3&&p3.value)sp.p3=p3.value;
   return sp;
 }
-function updateSpecialPts(){if(!currentUser)return;document.getElementById('banner-pts-special').textContent=calcScore(currentUser.uid,collectPicks(),collectKoPicks(),collectSpecial())+' pts';}
+function updateSpecialPts(){if(!currentUser)return;document.getElementById('banner-pts-special').textContent=calcSpecialScore(currentUser.uid,collectSpecial())+' pts';}
 function renderSpecial(){
   const locked=new Date()>=SPECIAL_DEADLINE;
   document.getElementById('special-locked-msg').style.display=locked?'block':'none';
@@ -1334,19 +1345,27 @@ function confirmKoPick(key){
   renderKo();
 }
 function collectKoPicks(){return {...userKoPicks};}
-function updateKoPts(){if(!currentUser)return;document.getElementById('banner-pts-ko').textContent=calcScore(currentUser.uid,collectPicks(),collectKoPicks(),collectSpecial())+' pts';}
+function updateKoPts(){if(!currentUser)return;document.getElementById('banner-pts-ko').textContent=calcMainScore(currentUser.uid,collectPicks(),collectKoPicks())+' pts';}
 
 // ─── CALC SCORE ───────────────────────────────────────────────────────────────
-function calcScore(uid,picks,koPicks,special){
+function calcMainScore(uid,picks,koPicks){
   let pts=0;
-  picks=picks||DB.users[uid]?.picks||{};koPicks=koPicks||DB.users[uid]?.koPicks||{};special=special||DB.users[uid]?.special||{};
+  picks=picks||DB.users[uid]?.picks||{};koPicks=koPicks||DB.users[uid]?.koPicks||{};
   if(picks['champ']&&DB.results['champ']&&picks['champ']===DB.results['champ'])pts+=5;
   for(const g of Object.values(GROUPS)){for(const m of g.matches){if(!picks[m.key]||!DB.results[m.key])continue;const ph=parseInt(picks[m.key][0]),pa=parseInt(picks[m.key][1]),rh=parseInt(DB.results[m.key][0]),ra=parseInt(DB.results[m.key][1]);if(ph===rh&&pa===ra)pts+=3;else if((ph>pa&&rh>ra)||(ph<pa&&rh<ra)||(ph===pa&&rh===ra))pts+=1;}}
   KO_STRUCTURE.forEach(round=>{for(let m=0;m<round.count;m++){const key=getKoMatchKey(round.key,m);const pH=koPicks[key+'_h'],pA=koPicks[key+'_a'],rH=DB.ko[key+'_h'],rA=DB.ko[key+'_a'];if(pH===undefined||rH===undefined)continue;const phi=parseInt(pH),pai=parseInt(pA),rhi=parseInt(rH),rai=parseInt(rA);if(phi===rhi&&pai===rai)pts+=3;else if((phi>pai&&rhi>rai)||(phi<pai&&rhi<rai))pts+=1;const pPen=koPicks[key+'_pen'],rPen=DB.ko[key+'_pen'];if(pPen!==undefined&&rPen!==undefined){if(pPen===rPen)pts+=1;if(pPen==='1'&&rPen==='1'){const ppH=koPicks[key+'_pen_h'],ppA=koPicks[key+'_pen_a'],rpH=DB.ko[key+'_pen_h'],rpA=DB.ko[key+'_pen_a'];if(ppH!==undefined&&rpH!==undefined&&ppH===rpH&&ppA===rpA)pts+=2;}}}});
   if(koPicks['ko_champ']&&DB.ko['ko_champ']&&koPicks['ko_champ']===DB.ko['ko_champ'])pts+=5;
+  return pts;
+}
+function calcSpecialScore(uid,special){
+  let pts=0;
+  special=special||DB.users[uid]?.special||{};
   if(special.scorer&&DB.results.scorer&&special.scorer.toLowerCase()===DB.results.scorer.toLowerCase())pts+=5;
   ['p1','p2','p3'].forEach(k=>{if(special[k]&&DB.results[k]&&special[k]===DB.results[k])pts+=3;});
   return pts;
+}
+function calcScore(uid,picks,koPicks,special){
+  return calcMainScore(uid,picks,koPicks)+calcSpecialScore(uid,special);
 }
 function calcExact(uid,picks,koPicks){
   let exact=0;
@@ -1418,23 +1437,53 @@ async function saveKoPicks(){
 }
 
 // ─── RANKING ──────────────────────────────────────────────────────────────────
+function _rankingRowHtml(r,rank){
+  const medal=rank===1?`<div class="rank-medal medal-1">1</div>`:rank===2?`<div class="rank-medal medal-2">2</div>`:rank===3?`<div class="rank-medal medal-3">3</div>`:`<div class="rank-medal medal-n">${rank}</div>`;
+  const exactLabel=r.exact>0?`<span style="font-size:10px;color:#1a7f37;font-weight:600;">🎯 ${r.exact} exacto${r.exact!==1?'s':''}</span>`:'';
+  return `<div class="ranking-row">${medal}<div><div class="rank-name">${r.name}</div><div class="rank-sub" style="display:flex;gap:6px;align-items:center;">${r.area?`<span>${r.area}</span>`:''}${exactLabel}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:var(--text2);"> pts</span></div></div>`;
+}
 function renderRanking(){
+  // ── Ranking principal (grupos + eliminatoria) ──
   const rows=[];
-  for(const [uid,data] of Object.entries(DB.users)){if(uid===ADMIN_RUT)continue;const pts=calcScore(uid,data.picks,data.koPicks,data.special);const exact=calcExact(uid,data.picks,data.koPicks);rows.push({name:data.name,area:data.area||'',pts,exact});}
+  for(const [uid,data] of Object.entries(DB.users)){if(uid===ADMIN_RUT)continue;const pts=calcMainScore(uid,data.picks,data.koPicks);const exact=calcExact(uid,data.picks,data.koPicks);rows.push({name:data.name,area:data.area||'',pts,exact});}
   rows.sort((a,b)=>b.pts-a.pts||b.exact-a.exact);
-  if(rows.length===0){document.getElementById('ranking-list').innerHTML='<div style="color:var(--text2);font-size:14px;text-align:center;padding:24px;">Nadie ha guardado picks aún.</div>';return;}
   let html='';
-  // Assign positions respecting tiebreaker: same pts+exact = same rank
-  let rank=1;
-  rows.forEach((r,idx)=>{
-    if(idx>0&&(rows[idx-1].pts!==r.pts||rows[idx-1].exact!==r.exact))rank=idx+1;
-    const medal=rank===1?`<div class="rank-medal medal-1">1</div>`:rank===2?`<div class="rank-medal medal-2">2</div>`:rank===3?`<div class="rank-medal medal-3">3</div>`:`<div class="rank-medal medal-n">${rank}</div>`;
-    const exactLabel=r.exact>0?`<span style="font-size:10px;color:#1a7f37;font-weight:600;">🎯 ${r.exact} exacto${r.exact!==1?'s':''}</span>`:'';
-    html+=`<div class="ranking-row">${medal}<div><div class="rank-name">${r.name}</div><div class="rank-sub" style="display:flex;gap:6px;align-items:center;">${r.area?`<span>${r.area}</span>`:''}${exactLabel}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:var(--text2);"> pts</span></div></div>`;
-  });
+  if(rows.length===0){html='<div style="color:var(--text2);font-size:14px;text-align:center;padding:24px;">Nadie ha guardado picks aún.</div>';}
+  else{let rank=1;rows.forEach((r,idx)=>{if(idx>0&&(rows[idx-1].pts!==r.pts||rows[idx-1].exact!==r.exact))rank=idx+1;html+=_rankingRowHtml(r,rank);});}
   document.getElementById('ranking-list').innerHTML=html;
   const lu=document.getElementById('last-updated-ranking');
   if(lu&&DB.results['_lastUpdated'])lu.textContent='Actualizado: '+DB.results['_lastUpdated'];
+
+  // ── Ranking especiales ──
+  const srows=[];
+  for(const [uid,data] of Object.entries(DB.users)){
+    if(uid===ADMIN_RUT)continue;
+    const sp=data.special||{};
+    const hasAny=sp.scorer||sp.p1||sp.p2||sp.p3;
+    const pts=calcSpecialScore(uid,sp);
+    const detail=[];
+    if(sp.scorer)detail.push(`⚽ ${sp.scorer}`);
+    if(sp.p1)detail.push(`🥇 ${sp.p1}`);
+    if(sp.p2)detail.push(`🥈 ${sp.p2}`);
+    if(sp.p3)detail.push(`🥉 ${sp.p3}`);
+    srows.push({name:data.name,area:data.area||'',pts,detail:detail.join(' · '),hasAny:!!hasAny});
+  }
+  srows.sort((a,b)=>b.pts-a.pts);
+  let shtml='';
+  if(srows.filter(r=>r.hasAny).length===0){
+    shtml='<div style="color:var(--text2);font-size:13px;text-align:center;padding:16px;">Nadie ha completado apuestas especiales aún.</div>';
+  } else {
+    let srank=1;
+    srows.forEach((r,idx)=>{
+      if(!r.hasAny){shtml+=`<div class="ranking-row" style="opacity:0.4;"><div class="rank-medal medal-n">–</div><div><div class="rank-name">${r.name}</div><div class="rank-sub">Sin completar</div></div><div class="rank-pts">–</div></div>`;return;}
+      if(idx>0&&srows[idx-1].hasAny&&srows[idx-1].pts!==r.pts)srank=idx+1;
+      const medal=srank===1?`<div class="rank-medal medal-1">1</div>`:srank===2?`<div class="rank-medal medal-2">2</div>`:srank===3?`<div class="rank-medal medal-3">3</div>`:`<div class="rank-medal medal-n">${srank}</div>`;
+      shtml+=`<div class="ranking-row">${medal}<div><div class="rank-name">${r.name}</div><div class="rank-sub" style="font-size:10px;">${r.detail}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:var(--text2);"> pts</span></div></div>`;
+    });
+  }
+  document.getElementById('ranking-special-list').innerHTML=shtml;
+  const sl2=document.getElementById('ranking-special-list-2');
+  if(sl2)sl2.innerHTML=shtml;
 }
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
@@ -1761,13 +1810,14 @@ function renderMisPicks(){
   const picks=ud.picks||{};
   const koPicks=ud.koPicks||{};
   const special=ud.special||{};
-  const pts=calcScore(currentUser.uid,picks,koPicks,special);
+  const pts=calcMainScore(currentUser.uid,picks,koPicks);
+  const spts=calcSpecialScore(currentUser.uid,special);
 
   // Update header
   const ini=currentUser.name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
   const av=document.getElementById('avatar-mispicks');if(av)av.textContent=ini;
   const bn=document.getElementById('banner-name-mispicks');if(bn)bn.textContent=currentUser.name;
-  const bp=document.getElementById('banner-pts-mispicks');if(bp)bp.textContent=pts+' pts';
+  const bp=document.getElementById('banner-pts-mispicks');if(bp)bp.textContent=pts+' pts · ⭐ '+spts+' esp';
 
   let html='';
 
@@ -1855,7 +1905,7 @@ function renderAdminStats(){
   const sinKo=all.filter(([,d])=>!d.koPicks||Object.keys(d.koPicks).length===0).map(([,d])=>d.name);
 
   // Ranking snapshot
-  const rows=all.map(([uid,d])=>({name:d.name,area:d.area||'',pts:calcScore(uid,d.picks,d.koPicks,d.special)})).sort((a,b)=>b.pts-a.pts);
+  const rows=all.map(([uid,d])=>({name:d.name,area:d.area||'',pts:calcMainScore(uid,d.picks,d.koPicks),spts:calcSpecialScore(uid,d.special)})).sort((a,b)=>b.pts-a.pts);
 
   let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
     <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:10px;text-align:center;">
@@ -1887,7 +1937,7 @@ function renderAdminStats(){
     <div style="font-size:11px;font-weight:700;color:#818cf8;margin-bottom:6px;">🏆 Ranking actual:</div>`;
   rows.forEach((r,i)=>{
     const medal=['🥇','🥈','🥉'][i]||`${i+1}.`;
-    html+=`<div style="display:flex;justify-content:space-between;font-size:12px;color:#c7d2fe;padding:2px 0;">${medal} <span style="flex:1;margin-left:6px;">${r.name}${r.area?' ('+r.area+')':''}</span><span style="font-weight:700;color:#e0e7ff;">${r.pts} pts</span></div>`;
+    html+=`<div style="display:flex;justify-content:space-between;font-size:12px;color:#c7d2fe;padding:2px 0;">${medal} <span style="flex:1;margin-left:6px;">${r.name}${r.area?' ('+r.area+')':''}</span><span style="font-weight:700;color:#e0e7ff;">${r.pts} pts <span style="font-size:10px;color:#a5b4fc;">⭐${r.spts}</span></span></div>`;
   });
   html+=`</div>`;
   panel.innerHTML=html;
