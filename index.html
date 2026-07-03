@@ -1945,8 +1945,10 @@ function renderAdminStats(){
   // Generar mensaje WhatsApp
   const deadlineStr='domingo 5 de julio a las 23:59';
   const ranking3=rows.slice(0,3).map((r,i)=>['🥇','🥈','🥉'][i]+' '+r.name+' – '+r.pts+' pts').join('\n');
-  const pendientes=sinEspeciales.length>0?`\n⚠️ Faltan especiales: ${sinEspeciales.join(', ')}`:'\n✅ ¡Todos completaron las especiales!';
-  const msg=`🏆 *POLLA MUNDIAL AMPLIFICA* 🏆\n\n📊 *Ranking actual (${total} participantes):*\n${ranking3}${rows.length>3?'\n...y más':''}${pendientes}\n\n⭐ *¡Aún puedes completar tus Apuestas Especiales!*\nGoleador del torneo, campeón, podio — hasta *${deadlineStr}*.\n\nVale hasta *+11 puntos extra* y puedes remontar el ranking 🚀\n\nEntra en la app y ve a la pestaña ⭐ *Especiales* antes de que cierre 👇`;
+  const srowsMsg=all.map(([uid,d])=>({name:d.name,pts:calcSpecialScore(uid,d.special),has:!!(d.special&&(d.special.scorer||d.special.p1))})).filter(r=>r.has).sort((a,b)=>b.pts-a.pts);
+  const sranking3=srowsMsg.slice(0,3).map((r,i)=>['🥇','🥈','🥉'][i]+' '+r.name+' – '+r.pts+' pts').join('\n');
+  const pendientes=sinEspeciales.length>0?`⚠️ *Aún sin completar:* ${sinEspeciales.join(', ')}`:'✅ ¡Todos completaron las especiales!';
+  const msg=`⚽ *POLLA MUNDIAL AMPLIFICA* ⚽\n\n📊 *Ranking Principal* (grupos + eliminatoria)\n${ranking3}${rows.length>3?'\n_...y más_':''}\n\n⭐ *Ranking Apuestas Especiales* (competencia independiente)\n${sranking3||'_Nadie ha apostado aún_'}${srowsMsg.length>3?'\n_...y más_':''}\n\n${pendientes}\n\n🎯 *¡Las Especiales siguen abiertas hasta el ${deadlineStr}!*\nGoleador del torneo · Campeón · Podio final\nVale *hasta 14 pts* — ¡es una competencia aparte que puedes ganar tú! 🚀\n\nEntra en la app → pestaña ⭐ *Especiales* 👇`;
   document.getElementById('admin-msg-text').value=msg;
   document.getElementById('admin-msg-whatsapp').style.display='block';
 }
