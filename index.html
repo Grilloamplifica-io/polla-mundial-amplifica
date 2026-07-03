@@ -1455,31 +1455,35 @@ function renderRanking(){
   if(lu&&DB.results['_lastUpdated'])lu.textContent='Actualizado: '+DB.results['_lastUpdated'];
 
   // ── Ranking especiales ──
-  const srows=[];
+  const sWithPicks=[], sNoPicks=[];
   for(const [uid,data] of Object.entries(DB.users)){
     if(uid===ADMIN_RUT)continue;
     const sp=data.special||{};
-    const hasAny=sp.scorer||sp.p1||sp.p2||sp.p3;
+    const hasAny=!!(sp.scorer||sp.p1||sp.p2||sp.p3);
     const pts=calcSpecialScore(uid,sp);
-    const detail=[];
-    if(sp.scorer)detail.push(`⚽ ${sp.scorer}`);
-    if(sp.p1)detail.push(`🥇 ${sp.p1}`);
-    if(sp.p2)detail.push(`🥈 ${sp.p2}`);
-    if(sp.p3)detail.push(`🥉 ${sp.p3}`);
-    srows.push({name:data.name,area:data.area||'',pts,detail:detail.join(' · '),hasAny:!!hasAny});
+    const chips=[];
+    if(sp.scorer)chips.push(`⚽ ${sp.scorer}`);
+    if(sp.p1)chips.push(`🥇 ${sp.p1}`);
+    if(sp.p2)chips.push(`🥈 ${sp.p2}`);
+    if(sp.p3)chips.push(`🥉 ${sp.p3}`);
+    if(hasAny)sWithPicks.push({name:data.name,area:data.area||'',pts,chips});
+    else sNoPicks.push({name:data.name});
   }
-  srows.sort((a,b)=>b.pts-a.pts);
+  sWithPicks.sort((a,b)=>b.pts-a.pts);
   let shtml='';
-  if(srows.filter(r=>r.hasAny).length===0){
-    shtml='<div style="color:var(--text2);font-size:13px;text-align:center;padding:16px;">Nadie ha completado apuestas especiales aún.</div>';
+  if(sWithPicks.length===0){
+    shtml='<div style="color:#c4b5fd;font-size:13px;text-align:center;padding:16px;">Nadie ha completado apuestas especiales aún.</div>';
   } else {
     let srank=1;
-    srows.forEach((r,idx)=>{
-      if(!r.hasAny){shtml+=`<div class="ranking-row" style="opacity:0.4;"><div class="rank-medal medal-n">–</div><div><div class="rank-name">${r.name}</div><div class="rank-sub">Sin completar</div></div><div class="rank-pts">–</div></div>`;return;}
-      if(idx>0&&srows[idx-1].hasAny&&srows[idx-1].pts!==r.pts)srank=idx+1;
+    sWithPicks.forEach((r,idx)=>{
+      if(idx>0&&sWithPicks[idx-1].pts!==r.pts)srank=idx+1;
       const medal=srank===1?`<div class="rank-medal medal-1">1</div>`:srank===2?`<div class="rank-medal medal-2">2</div>`:srank===3?`<div class="rank-medal medal-3">3</div>`:`<div class="rank-medal medal-n">${srank}</div>`;
-      shtml+=`<div class="ranking-row">${medal}<div><div class="rank-name">${r.name}</div><div class="rank-sub" style="font-size:10px;">${r.detail}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:var(--text2);"> pts</span></div></div>`;
+      const chipsHtml=r.chips.map(c=>`<span style="display:inline-block;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.35);border-radius:20px;padding:1px 7px;font-size:10px;color:#e9d5ff;margin:1px 2px 1px 0;">${c}</span>`).join('');
+      shtml+=`<div class="ranking-row">${medal}<div style="flex:1;min-width:0;"><div class="rank-name">${r.name}${r.area?` <span style="font-size:10px;color:var(--text2);">(${r.area})</span>`:''}</div><div style="margin-top:3px;line-height:1.6;">${chipsHtml}</div></div><div class="rank-pts">${r.pts}<span style="font-size:12px;font-weight:400;color:#c4b5fd;"> pts</span></div></div>`;
     });
+    if(sNoPicks.length>0){
+      shtml+=`<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(168,85,247,0.2);font-size:11px;color:#a78bfa;">Sin completar: ${sNoPicks.map(r=>r.name).join(' · ')}</div>`;
+    }
   }
   document.getElementById('ranking-special-list').innerHTML=shtml;
   const sl2=document.getElementById('ranking-special-list-2');
