@@ -1631,15 +1631,35 @@ async function fixR16Teams(){
   DB.ko['ko_team_r16_2_1']='Noruega';
   DB.ko['ko_team_r16_3_0']='México';
   DB.ko['ko_team_r16_3_1']='Inglaterra';
-  // Resultados R32 que los originan (para scoring)
+  DB.ko['ko_team_r16_4_0']='España';
+  DB.ko['ko_team_r16_4_1']='Portugal';
+  DB.ko['ko_team_r16_5_0']='Bélgica';
+  DB.ko['ko_team_r16_5_1']='EE.UU.';
+  DB.ko['ko_team_r16_6_0']='Egipto';
+  DB.ko['ko_team_r16_6_1']='Argentina';
+  DB.ko['ko_team_r16_7_0']='Suiza';
+  DB.ko['ko_team_r16_7_1']='Colombia';
+  // Todos los resultados R32 (para scoring)
   DB.ko['ko_r32_0_h']='0';DB.ko['ko_r32_0_a']='1';
   DB.ko['ko_r32_1_h']='1';DB.ko['ko_r32_1_a']='1';DB.ko['ko_r32_1_pen']='1';DB.ko['ko_r32_1_pen_h']='3';DB.ko['ko_r32_1_pen_a']='4';
   DB.ko['ko_r32_2_h']='1';DB.ko['ko_r32_2_a']='1';DB.ko['ko_r32_2_pen']='1';DB.ko['ko_r32_2_pen_h']='2';DB.ko['ko_r32_2_pen_a']='3';
   DB.ko['ko_r32_3_h']='2';DB.ko['ko_r32_3_a']='1';
+  DB.ko['ko_r32_4_h']='3';DB.ko['ko_r32_4_a']='0';
+  DB.ko['ko_r32_5_h']='1';DB.ko['ko_r32_5_a']='2';
+  DB.ko['ko_r32_6_h']='2';DB.ko['ko_r32_6_a']='0';
+  DB.ko['ko_r32_7_h']='2';DB.ko['ko_r32_7_a']='1';
+  DB.ko['ko_r32_8_h']='2';DB.ko['ko_r32_8_a']='0';
+  DB.ko['ko_r32_9_h']='3';DB.ko['ko_r32_9_a']='2';
+  DB.ko['ko_r32_10_h']='2';DB.ko['ko_r32_10_a']='1';
+  DB.ko['ko_r32_11_h']='3';DB.ko['ko_r32_11_a']='0';
+  DB.ko['ko_r32_12_h']='2';DB.ko['ko_r32_12_a']='0';
+  DB.ko['ko_r32_13_h']='3';DB.ko['ko_r32_13_a']='2';
+  DB.ko['ko_r32_14_h']='1';DB.ko['ko_r32_14_a']='0';
+  DB.ko['ko_r32_15_h']='1';DB.ko['ko_r32_15_a']='1';DB.ko['ko_r32_15_pen']='1';DB.ko['ko_r32_15_pen_h']='2';DB.ko['ko_r32_15_pen_a']='4';
   await dbSave();
-  btn.disabled=false;btn.innerHTML='<i class="ti ti-shield-check"></i> Fijar equipos octavos (Canadá/Marruecos/Paraguay/Brasil)';
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-shield-check"></i> Fijar equipos octavos (todos los clasificados)';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Equipos fijados: Canadá · Marruecos · Paraguay · Francia · Brasil · Noruega · México · Inglaterra</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> 16 equipos fijados + 16 resultados R32 cargados</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
@@ -1661,10 +1681,26 @@ async function loadR32Results(){
   DB.ko['ko_r32_6_h']='2';DB.ko['ko_r32_6_a']='0';
   // P8: Inglaterra 2-1 RD Congo (01 jul)
   DB.ko['ko_r32_7_h']='2';DB.ko['ko_r32_7_a']='1';
+  // P9: EE.UU. 2-0 Bosnia y Herz. (01 jul)
+  DB.ko['ko_r32_8_h']='2';DB.ko['ko_r32_8_a']='0';
+  // P10: Bélgica 3-2 Senegal AET (01 jul)
+  DB.ko['ko_r32_9_h']='3';DB.ko['ko_r32_9_a']='2';
+  // P11: Portugal 2-1 Croacia (02 jul)
+  DB.ko['ko_r32_10_h']='2';DB.ko['ko_r32_10_a']='1';
+  // P12: España 3-0 Austria (02 jul)
+  DB.ko['ko_r32_11_h']='3';DB.ko['ko_r32_11_a']='0';
+  // P13: Suiza 2-0 Argelia (02 jul)
+  DB.ko['ko_r32_12_h']='2';DB.ko['ko_r32_12_a']='0';
+  // P14: Colombia 1-0 Ghana (03 jul)
+  DB.ko['ko_r32_14_h']='1';DB.ko['ko_r32_14_a']='0';
+  // P15: Argentina 3-2 Cabo Verde AET (03 jul)
+  DB.ko['ko_r32_13_h']='3';DB.ko['ko_r32_13_a']='2';
+  // P16: Australia 1-1 Egipto — penales 2-4 (Egipto clasifica) (03 jul)
+  DB.ko['ko_r32_15_h']='1';DB.ko['ko_r32_15_a']='1';DB.ko['ko_r32_15_pen']='1';DB.ko['ko_r32_15_pen_h']='2';DB.ko['ko_r32_15_pen_a']='4';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados 16avos jugados';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> 8 resultados cargados: Canadá · Paraguay(p) · Marruecos(p) · Brasil · Francia · Noruega · México · Inglaterra</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> 16 resultados cargados — bracket R32 completo</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
@@ -1678,10 +1714,10 @@ async function loadBracketR16(){
     {match:1,top:'Paraguay',bottom:'Francia',utc:'2026-07-04T21:00:00Z'},
     {match:2,top:'Brasil',bottom:'Noruega',utc:'2026-07-05T20:00:00Z'},
     {match:3,top:'México',bottom:'Inglaterra',utc:'2026-07-06T00:00:00Z'},
-    {match:4,top:'',bottom:'',utc:'2026-07-06T19:00:00Z'},
-    {match:5,top:'',bottom:'',utc:'2026-07-07T00:00:00Z'},
-    {match:6,top:'',bottom:'',utc:'2026-07-07T16:00:00Z'},
-    {match:7,top:'',bottom:'',utc:'2026-07-07T20:00:00Z'},
+    {match:4,top:'España',bottom:'Portugal',utc:'2026-07-06T19:00:00Z'},
+    {match:5,top:'Bélgica',bottom:'EE.UU.',utc:'2026-07-07T00:00:00Z'},
+    {match:6,top:'Egipto',bottom:'Argentina',utc:'2026-07-07T16:00:00Z'},
+    {match:7,top:'Suiza',bottom:'Colombia',utc:'2026-07-07T20:00:00Z'},
   ];
   for(const t of R16){
     if(t.top)DB.ko[`ko_team_r16_${t.match}_0`]=t.top;
