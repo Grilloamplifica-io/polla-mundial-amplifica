@@ -540,6 +540,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <button class="btn-auto" id="btn-load-r16" onclick="loadBracketR16()" style="border-color:#818cf8;color:#e0e7ff;"><i class="ti ti-trophy"></i> Cargar bracket octavos (R16)</button>
         <button class="btn-auto" id="btn-fix-r16-teams" onclick="fixR16Teams()" style="border-color:#f97316;color:#fed7aa;"><i class="ti ti-shield-check"></i> Fijar equipos octavos (todos los clasificados)</button>
         <button class="btn-auto" onclick="fixR16Times()" style="border-color:#34d399;color:#a7f3d0;"><i class="ti ti-clock"></i> Fijar horarios octavos</button>
+        <button class="btn-auto" id="btn-load-qf-sf-final" onclick="loadKOScheduleFinal()" style="border-color:#eab308;color:#fef08a;"><i class="ti ti-calendar-event"></i> Cargar horarios Cuartos/Semifinal/Final</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1131,6 +1132,8 @@ function getKoMatchKey(rk,idx){return `ko_${rk}_${idx}`;}
 // Bracket FIFA 2026: qué dos partidos de 16avos alimentan a cada octavo
 // r16_N = [r32_top, r32_bot]
 const R16_FROM_R32=[[0,2],[1,4],[3,5],[6,7],[11,10],[9,8],[15,13],[12,14]];
+// Semifinales FIFA 2026: Match101(Dallas)=W97(Boston,r8_0)+W98(LA,r8_2) · Match102(Atlanta)=W99(Miami,r8_1)+W100(KC,r8_3)
+const R4_FROM_R8=[[0,2],[1,3]];
 
 function _koWinner(rk,idx){
   // Devuelve el equipo ganador de un partido KO (considera penales). null si sin resultado.
@@ -1156,10 +1159,10 @@ function getKoTeam(rk,matchIdx,side){
     if(r32idx!==undefined){const w=_koWinner('r32',r32idx);if(w)return w;}
     return{name:'Clasificado',flag:'🏳️',tbd:true};
   }
-  // r8, r4, r2: derivar secuencialmente desde r16
+  // r8: derivar secuencialmente desde r16. r4: bracket cruzado (ver R4_FROM_R8). r2: secuencial desde r4.
   const ri=KO_STRUCTURE.findIndex(r=>r.key===rk);
   const prev=KO_STRUCTURE[ri-1];
-  const prevIdx=matchIdx*2+side;
+  const prevIdx=rk==='r4'?R4_FROM_R8[matchIdx][side]:matchIdx*2+side;
   const prevKey=getKoMatchKey(prev.key,prevIdx);
   const tH=getKoTeam(prev.key,prevIdx,0),tA=getKoTeam(prev.key,prevIdx,1);
   const rH=DB.ko[prevKey+'_h'],rA=DB.ko[prevKey+'_a'];
@@ -1768,6 +1771,29 @@ async function fixR32Times(){
   btn.disabled=false;btn.innerHTML='<i class="ti ti-clock-edit"></i> Corregir horarios 16avos (P3/P9/P15)';
   const doneEl=document.getElementById('ai-done');
   doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios corregidos: P3 Países Bajos/Marruecos · P9 EE.UU./Bosnia · P15 Colombia/Ghana</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
+
+async function loadKOScheduleFinal(){
+  if(!confirm('¿Cargar los horarios de Cuartos de final, Semifinal y Final (Mundial 2026)?'))return;
+  const btn=document.getElementById('btn-load-qf-sf-final');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
+  // Horarios oficiales FIFA (ET) — fuente: fifa.com bracket de eliminatoria
+  // Cuartos: Match97 Boston jue 9 jul 16:00 ET · Match99 Miami sáb 11 jul 17:00 ET
+  // Match98 Los Ángeles vie 10 jul 15:00 ET · Match100 Kansas City sáb 11 jul 21:00 ET
+  DB.ko['ko_time_r8_0']='2026-07-09T20:00:00Z';
+  DB.ko['ko_time_r8_1']='2026-07-11T21:00:00Z';
+  DB.ko['ko_time_r8_2']='2026-07-10T19:00:00Z';
+  DB.ko['ko_time_r8_3']='2026-07-12T01:00:00Z';
+  // Semifinales: Match101 Dallas mar 14 jul 15:00 ET · Match102 Atlanta mié 15 jul 15:00 ET
+  DB.ko['ko_time_r4_0']='2026-07-14T19:00:00Z';
+  DB.ko['ko_time_r4_1']='2026-07-15T19:00:00Z';
+  // Final: Match104 MetLife Stadium (NY/NJ) dom 19 jul 15:00 ET
+  DB.ko['ko_time_r2_0']='2026-07-19T19:00:00Z';
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-calendar-event"></i> Cargar horarios Cuartos/Semifinal/Final';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios de cuartos, semifinal y final cargados hasta el 19 de julio.</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
