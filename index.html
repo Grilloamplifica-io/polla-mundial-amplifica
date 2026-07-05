@@ -540,6 +540,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <button class="btn-auto" id="btn-load-r16" onclick="loadBracketR16()" style="border-color:#818cf8;color:#e0e7ff;"><i class="ti ti-trophy"></i> Cargar bracket octavos (R16)</button>
         <button class="btn-auto" id="btn-fix-r16-teams" onclick="fixR16Teams()" style="border-color:#f97316;color:#fed7aa;"><i class="ti ti-shield-check"></i> Fijar equipos octavos (todos los clasificados)</button>
         <button class="btn-auto" onclick="fixR16Times()" style="border-color:#34d399;color:#a7f3d0;"><i class="ti ti-clock"></i> Fijar horarios octavos</button>
+        <button class="btn-auto" id="btn-load-r16-results" onclick="loadR16Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados octavos</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1730,6 +1731,19 @@ async function loadR32Results(){
   renderKo();renderAdmin();buildTicker();
 }
 
+async function loadR16Results(){
+  const btn=document.getElementById('btn-load-r16-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
+  // Marruecos 3-0 Canadá (4 jul) — Canadá=top(h), Marruecos=bottom(a)
+  DB.ko['ko_r16_0_h']='0';DB.ko['ko_r16_0_a']='3';
+  // Francia 1-0 Paraguay (4 jul) — Paraguay=top(h), Francia=bottom(a)
+  DB.ko['ko_r16_1_h']='0';DB.ko['ko_r16_1_a']='1';
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados octavos';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Octavos cargados: Marruecos 3-0 Canadá · Francia 1-0 Paraguay</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
 async function loadBracketR16(){
   if(!confirm('¿Cargar el bracket de octavos de final con horarios y clasificados conocidos?'))return;
   const btn=document.getElementById('btn-load-r16');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
