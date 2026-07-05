@@ -1737,10 +1737,12 @@ async function loadR16Results(){
   DB.ko['ko_r16_0_h']='0';DB.ko['ko_r16_0_a']='3';
   // Francia 1-0 Paraguay (4 jul) — Paraguay=top(h), Francia=bottom(a)
   DB.ko['ko_r16_1_h']='0';DB.ko['ko_r16_1_a']='1';
+  // Noruega 2-1 Brasil (5 jul) — Brasil=top(h), Noruega=bottom(a)
+  DB.ko['ko_r16_2_h']='1';DB.ko['ko_r16_2_a']='2';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados octavos';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Octavos cargados: Marruecos 3-0 Canadá · Francia 1-0 Paraguay</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Octavos cargados: Marruecos 3-0 Canadá · Francia 1-0 Paraguay · Noruega 2-1 Brasil</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
