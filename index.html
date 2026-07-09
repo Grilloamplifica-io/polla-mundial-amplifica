@@ -541,6 +541,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <button class="btn-auto" id="btn-fix-r16-teams" onclick="fixR16Teams()" style="border-color:#f97316;color:#fed7aa;"><i class="ti ti-shield-check"></i> Fijar equipos octavos (todos los clasificados)</button>
         <button class="btn-auto" onclick="fixR16Times()" style="border-color:#34d399;color:#a7f3d0;"><i class="ti ti-clock"></i> Fijar horarios octavos</button>
         <button class="btn-auto" id="btn-load-r16-results" onclick="loadR16Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados octavos</button>
+        <button class="btn-auto" onclick="fixR8Times()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-clock"></i> Fijar horarios cuartos</button>
+        <button class="btn-auto" id="btn-load-r8-results" onclick="loadR8Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados cuartos</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1634,6 +1636,30 @@ async function fixR16Times(){
   await dbSave();
   const doneEl=document.getElementById('ai-done');
   doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios octavos cargados correctamente</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
+async function fixR8Times(){
+  // r8_0: Marruecos vs Francia  — jue 9 jul 8pm ET = 2026-07-10T00:00:00Z
+  // r8_1: Noruega vs Inglaterra  — vie 10 jul 5pm ET = 2026-07-10T21:00:00Z
+  // r8_2: España vs Bélgica      — jue 9 jul 3pm ET = 2026-07-09T19:00:00Z
+  // r8_3: Argentina vs Suiza     — sáb 11 jul 8pm ET = 2026-07-12T00:00:00Z
+  DB.ko['ko_time_r8_0']='2026-07-10T00:00:00Z';
+  DB.ko['ko_time_r8_1']='2026-07-10T21:00:00Z';
+  DB.ko['ko_time_r8_2']='2026-07-09T19:00:00Z';
+  DB.ko['ko_time_r8_3']='2026-07-12T00:00:00Z';
+  await dbSave();
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios cuartos cargados: España-Bélgica jue 15:00 CLT · Marruecos-Francia jue 20:00 CLT · Noruega-Inglaterra vie 17:00 CLT · Argentina-Suiza sáb 20:00 CLT</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
+async function loadR8Results(){
+  const btn=document.getElementById('btn-load-r8-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados cuartos';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Resultados cuartos cargados</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
