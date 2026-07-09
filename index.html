@@ -726,7 +726,7 @@ const KO_STRUCTURE=[
 const ADMIN_RUT='u_193200680';
 
 let currentUser=null,userPicks={},userKoPicks={},userSpecial={};
-let DB={users:{},results:{},ko:{}};
+let DB={users:{},results:{},ko:{},blocked:{}};
 let activeGroup='ALL',tickerIdx=0,tickerTimer=null,tickerSlides=[];
 let cdTimer=null,trendTimer=null,trendSlides=[],trendIdx=0;
 
@@ -924,6 +924,7 @@ async function doLogin(){
   if(!rut||rut.length<7){err.textContent='RUT inválido (ej: 12345678-9).';err.style.display='block';return;}
   if(!area){err.textContent='Selecciona tu sucursal o área.';err.style.display='block';return;}
   const uid=rutToKey(rut);const isAdmin=(uid===ADMIN_RUT);
+  if(DB.blocked&&DB.blocked[uid]){err.textContent='Usuario bloqueado. Contacta al administrador.';err.style.display='block';return;}
   const ex=DB.users[uid];
   if(ex&&ex.name&&ex.name.toLowerCase()!==name.toLowerCase()&&!isAdmin){err.textContent='RUT ya registrado con otro nombre.';err.style.display='block';return;}
   currentUser={name,uid,area,isAdmin};
@@ -2003,6 +2004,16 @@ function renderMisPicks(){
 // ─── ADMIN USER MANAGEMENT ────────────────────────────────────────────────────
 let adminEditUid = null;
 
+async function deleteAndBlockUser(uid, name){
+  if(!confirm(`¿Eliminar y bloquear a ${name}? Esta acción no se puede deshacer.`))return;
+  if(!DB.blocked)DB.blocked={};
+  DB.blocked[uid]=true;
+  delete DB.users[uid];
+  await dbSave();
+  renderAdminUserList();
+  renderRanking();
+  alert(`${name} eliminado y bloqueado correctamente.`);
+}
 function renderAdminStats(){
   const panel=document.getElementById('admin-stats-panel');
   if(!panel)return;
@@ -2088,6 +2099,7 @@ function renderAdminUserList(){
       <div class="user-mgmt-btns">
         <button class="btn-unlock" onclick="unlockUser('${uid}')">🔓 Liberar</button>
         <button class="btn-edit" onclick="openAdminEdit('${uid}')">✏️ Editar</button>
+        <button class="btn-unlock" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;" onclick="deleteAndBlockUser('${uid}','${data.name}')">🚫 Eliminar</button>
       </div>
     </div>`;
   });
