@@ -1745,10 +1745,14 @@ async function loadR16Results(){
   DB.ko['ko_r16_4_h']='1';DB.ko['ko_r16_4_a']='0';
   // Bélgica 4-1 EE.UU. (6 jul) — Bélgica=top(h), EE.UU.=bottom(a)
   DB.ko['ko_r16_5_h']='4';DB.ko['ko_r16_5_a']='1';
+  // Argentina 3-2 Egipto (7 jul) — Egipto=top(h), Argentina=bottom(a)
+  DB.ko['ko_r16_6_h']='2';DB.ko['ko_r16_6_a']='3';
+  // Suiza 0-0 Colombia pen 4-3 (7 jul) — Suiza=top(h), Colombia=bottom(a)
+  DB.ko['ko_r16_7_h']='0';DB.ko['ko_r16_7_a']='0';DB.ko['ko_r16_7_pen']='1';DB.ko['ko_r16_7_pen_h']='4';DB.ko['ko_r16_7_pen_a']='3';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados octavos';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Octavos cargados: Marruecos 3-0 Canadá · Francia 1-0 Paraguay · Noruega 2-1 Brasil · Inglaterra 3-2 México · España 1-0 Portugal · Bélgica 4-1 EE.UU.</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Octavos cargados: Marruecos 3-0 Canadá · Francia 1-0 Paraguay · Noruega 2-1 Brasil · Inglaterra 3-2 México · España 1-0 Portugal · Bélgica 4-1 EE.UU. · Argentina 3-2 Egipto · Suiza 0-0 Colombia (4-3 pen)</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
