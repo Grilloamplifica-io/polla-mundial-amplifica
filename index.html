@@ -1208,7 +1208,7 @@ function renderKo(){
       }
       html+=`<div class="b-match-wrap">`;
       if(ri>0)html+=`<div class="b-conn"><div class="b-conn-top"></div><div class="b-conn-mid"></div><div class="b-conn-bot"></div></div>`;
-      const canClick=!locked&&(!tT.tbd||!tB.tbd);
+      const canClick=!locked&&(rH===null);
       html+=`<div class="b-match${locked?' locked-match':''}${rH!==null?' has-result':''}" ${canClick?`onclick="openKoModal('${key}','${round.label} P${m+1}','${tT.name}','${tB.name}','${tT.flag}','${tB.flag}')"`:''}>`
       ;
       html+=`<div class="b-team"><span class="b-team-flag">${tT.flag}</span><span class="b-team-name${tT.tbd?' tbd':''}">${tT.name}</span>`;
