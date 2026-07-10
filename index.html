@@ -1635,13 +1635,13 @@ async function fixR8Times(){
   // r8_1: Noruega vs Inglaterra  — vie 10 jul 5pm ET = 2026-07-10T21:00:00Z
   // r8_2: España vs Bélgica      — jue 9 jul 3pm ET = 2026-07-09T19:00:00Z
   // r8_3: Argentina vs Suiza     — sáb 11 jul 8pm ET = 2026-07-12T00:00:00Z
-  DB.ko['ko_time_r8_0']='2026-07-10T00:00:00Z';
-  DB.ko['ko_time_r8_1']='2026-07-10T21:00:00Z';
-  DB.ko['ko_time_r8_2']='2026-07-09T19:00:00Z';
-  DB.ko['ko_time_r8_3']='2026-07-12T00:00:00Z';
+  DB.ko['ko_time_r8_0']='2026-07-10T00:00:00Z';   // Marruecos-Francia: jue 9 jul 20:00 CLT (ya jugó)
+  DB.ko['ko_time_r8_2']='2026-07-10T19:00:00Z';   // España-Bélgica:    jue 10 jul 15:00 CLT
+  DB.ko['ko_time_r8_1']='2026-07-11T21:00:00Z';   // Noruega-Inglaterra: vie 11 jul 17:00 CLT
+  DB.ko['ko_time_r8_3']='2026-07-12T01:00:00Z';   // Argentina-Suiza:    vie 11 jul 21:00 CLT
   await dbSave();
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios cuartos cargados: España-Bélgica jue 15:00 CLT · Marruecos-Francia jue 20:00 CLT · Noruega-Inglaterra vie 17:00 CLT · Argentina-Suiza sáb 20:00 CLT</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Horarios cuartos: Marruecos-Francia jue 9 20:00 · España-Bélgica jue 10 15:00 · Noruega-Inglaterra vie 11 17:00 · Argentina-Suiza vie 11 21:00 (todos CLT)</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
