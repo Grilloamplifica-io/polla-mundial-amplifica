@@ -744,8 +744,8 @@ async function dbLoad(){
     }else{
       DB={users:{},results:{},ko:{}};
     }
-    ['users','results','ko'].forEach(k=>{if(!DB[k])DB[k]={};});
-  }catch(e){console.error('dbLoad:',e);DB={users:{},results:{},ko:{}};}
+    ['users','results','ko','blocked'].forEach(k=>{if(!DB[k])DB[k]={};});
+  }catch(e){console.error('dbLoad:',e);DB={users:{},results:{},ko:{},blocked:{}};}
 }
 async function dbSave(){
   try{
