@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación DISC · Amplifica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#4548FF;
+    --yellow:#F7DC4B;
+    --navy:#121755;
+    --gray:#1D1D1F;
+    --lightgray:#E1E0E0;
+    --bg:#FAFAFA;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--gray);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    line-height:1.5;
+  }
+  .app{ width:100%; max-width:640px; }
+  .eyebrow{
+    font-family:'Inter', sans-serif; font-size:12px; font-weight:600;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--blue); margin-bottom:8px;
+  }
+  h1{ font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:40px; color:var(--navy); line-height:1.05; letter-spacing:-0.01em; }
+  h2{ font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:26px; color:var(--navy); }
+  p{ color:#4a4a4d; font-size:15px; }
+  .card{ background:#fff; border-radius:16px; padding:36px; box-shadow:0 1px 3px rgba(18,23,85,0.08), 0 8px 24px rgba(18,23,85,0.06); }
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  .consent{ margin-top:24px; padding:16px; background:var(--bg); border-radius:10px; display:flex; gap:12px; align-items:flex-start; }
+  .consent input{ margin-top:3px; accent-color:var(--blue); width:16px; height:16px; flex-shrink:0; }
+  .consent label{ font-size:13.5px; color:#4a4a4d; }
+  button{ font-family:'Inter', sans-serif; font-weight:600; font-size:15px; border:none; border-radius:10px; padding:14px 28px; cursor:pointer; transition:transform .12s ease, opacity .12s ease; }
+  button:active{ transform:scale(0.98); }
+  button:disabled{ opacity:0.35; cursor:not-allowed; }
+  .btn-primary{ background:var(--blue); color:#fff; width:100%; margin-top:24px; }
+  .btn-primary:hover:not(:disabled){ opacity:0.9; }
+  .btn-ghost{ background:transparent; color:var(--navy); padding:10px 0; font-size:14px; }
+  .btn-secondary{ background:var(--yellow); color:var(--navy); }
+  .link-quiet{ display:block; text-align:center; margin-top:28px; font-size:12.5px; color:#b3b3b7; text-decoration:none; }
+
+  /* Form fields */
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:12px 14px; border-radius:8px; border:1.5px solid var(--lightgray);
+    font-family:'Inter', sans-serif; font-size:15px; color:var(--gray); background:#fff;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--blue); }
+  .field-error{ font-size:12px; color:#c0392b; margin-top:4px; display:none; }
+
+  /* Progress */
+  .progress-wrap{ margin-bottom:28px; }
+  .progress-label{ display:flex; justify-content:space-between; font-family:'Barlow Condensed', sans-serif; font-size:15px; font-weight:600; color:var(--navy); margin-bottom:8px; }
+  .progress-track{ height:4px; background:var(--lightgray); border-radius:4px; overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--blue); border-radius:4px; transition:width .3s ease; }
+
+  .block-instruction{ font-size:13px; color:#8a8a8e; margin-bottom:20px; }
+  .phrase-row{ display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--lightgray); }
+  .phrase-row:last-child{ border-bottom:none; }
+  .phrase-text{ flex:1; font-size:15.5px; color:var(--gray); font-weight:500; }
+  .tag-buttons{ display:flex; gap:8px; flex-shrink:0; }
+  .tag-btn{
+    font-family:'Inter', sans-serif; font-size:12.5px; font-weight:700; letter-spacing:0.03em;
+    padding:8px 12px; border-radius:8px; border:1.5px solid var(--lightgray); background:#fff; color:#9a9a9e;
+    cursor:pointer; transition:all .12s ease; white-space:nowrap;
+  }
+  .tag-btn.mas.selected{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .tag-btn.menos.selected{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .nav-row{ display:flex; gap:12px; margin-top:24px; }
+  .nav-row .btn-primary{ margin-top:0; }
+
+  /* Thanks screen */
+  .thanks-icon{
+    width:64px; height:64px; border-radius:50%; background:var(--blue);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
+    color:#fff; font-size:30px; font-family:'Barlow Condensed', sans-serif; font-weight:700;
+  }
+  .thanks-wrap{ text-align:center; }
+
+  /* Results (admin view) */
+  .profile-summary{ text-align:center; padding:28px 0 8px; }
+  .profile-code{ font-family:'Barlow Condensed', sans-serif; font-size:64px; font-weight:700; color:var(--navy); letter-spacing:0.02em; }
+  .profile-name{ font-size:14px; color:var(--blue); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-top:4px; }
+  .bars{ margin:32px 0; }
+  .bar-row{ margin-bottom:18px; }
+  .bar-head{ display:flex; justify-content:space-between; font-family:'Barlow Condensed', sans-serif; font-size:17px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+  .bar-track{ height:10px; background:var(--lightgray); border-radius:6px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:6px; width:0%; transition:width 1.1s cubic-bezier(.22,.9,.32,1); }
+  .bar-level{ font-size:12px; color:#8a8a8e; margin-top:4px; }
+  .narrative{ background:var(--bg); border-radius:12px; padding:20px; margin-top:8px; }
+  .narrative h3{ font-family:'Barlow Condensed', sans-serif; font-size:18px; color:var(--navy); margin-bottom:8px; }
+  .narrative p{ font-size:14.5px; }
+  .disclaimer{ font-size:12px; color:#9a9a9e; margin-top:20px; line-height:1.6; border-top:1px solid var(--lightgray); padding-top:16px; }
+  .footer-actions{ display:flex; gap:12px; margin-top:24px; }
+  .footer-actions button{ flex:1; }
+  .candidate-meta{ background:var(--bg); border-radius:10px; padding:14px 16px; margin-bottom:20px; font-size:13.5px; }
+  .candidate-meta div{ margin-bottom:2px; }
+  .candidate-meta strong{ color:var(--navy); }
+
+  /* Report sections */
+  .report-section{ margin-top:24px; }
+  .report-section h3{
+    font-family:'Barlow Condensed', sans-serif; font-size:19px; font-weight:600; color:var(--navy);
+    margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid var(--lightgray);
+  }
+  .report-section p{ font-size:14px; }
+  .tag-pill-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .tag-pill{ background:var(--bg); border:1px solid var(--lightgray); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--gray); }
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:480px){ .two-col{ grid-template-columns:1fr; } }
+  .list-col h4{ font-family:'Barlow Condensed', sans-serif; font-size:15px; color:var(--navy); margin-bottom:8px; font-weight:600; }
+  .list-col ul{ padding-left:18px; }
+  .list-col li{ font-size:13.5px; margin-bottom:5px; color:#4a4a4d; }
+  .list-col.fortalezas h4{ color:var(--blue); }
+  .list-col.desarrollo h4{ color:#8a6d00; }
+  .competency-row{ margin-bottom:16px; }
+  .competency-head{ display:flex; justify-content:space-between; font-size:13.5px; font-weight:600; color:var(--navy); margin-bottom:4px; }
+  .competency-desc{ font-size:12px; color:#8a8a8e; margin-bottom:6px; }
+  .competency-track{ height:8px; background:var(--lightgray); border-radius:5px; overflow:hidden; }
+  .competency-fill{ height:100%; background:var(--blue); border-radius:5px; width:0%; transition:width 1s ease; }
+
+  /* Admin list */
+  .admin-item{
+    display:flex; justify-content:space-between; align-items:center; padding:14px 16px;
+    border:1.5px solid var(--lightgray); border-radius:10px; margin-bottom:10px; cursor:pointer; transition:border-color .12s ease;
+  }
+  .admin-item:hover{ border-color:var(--blue); }
+  .admin-item-name{ font-weight:600; font-size:14.5px; color:var(--navy); }
+  .admin-item-sub{ font-size:12px; color:#9a9a9e; margin-top:2px; }
+  .admin-item-code{ font-family:'Barlow Condensed', sans-serif; font-size:22px; font-weight:700; color:var(--blue); }
+  .empty-state{ text-align:center; color:#9a9a9e; font-size:14px; padding:40px 0; }
+
+  @media print{ body{ padding:0; background:#fff; } .footer-actions{ display:none; } .card{ box-shadow:none; } }
+  @media (max-width: 480px){
+    h1{ font-size:32px; } .card{ padding:24px; } .profile-code{ font-size:48px; }
+    .phrase-row{ flex-direction:column; align-items:flex-start; gap:10px; }
+    .tag-buttons{ align-self:flex-end; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- INTRO -->
+  <div class="screen active" id="intro">
+    <div class="eyebrow">Amplifica · Evaluación complementaria</div>
+    <h1>Perfil de comportamiento DISC</h1>
+    <div class="card" style="margin-top:20px;">
+      <p>Este cuestionario consta de <strong>26 bloques</strong> con 4 frases cada uno. En cada bloque, elige la frase que <strong>MÁS</strong> te representa y la que <strong>MENOS</strong> te representa.</p>
+      <p>No hay respuestas correctas o incorrectas. Te tomará entre 10 y 15 minutos.</p>
+      <p>Este resultado es un <strong>insumo complementario</strong> del proceso de selección, no un factor excluyente de decisión. Los resultados serán revisados por el equipo de Personas de Amplifica.</p>
+      <div class="consent">
+        <input type="checkbox" id="consentCheck">
+        <label for="consentCheck">Entiendo que mis respuestas serán utilizadas como parte del proceso de evaluación psicolaboral de Amplifica, con carácter complementario, y autorizo su tratamiento conforme a la política de datos personales de la empresa.</label>
+      </div>
+      <button class="btn-primary" id="startBtn" disabled>Continuar</button>
+    </div>
+    <a href="#" class="link-quiet" id="adminLinkIntro">Acceso equipo de Personas</a>
+  </div>
+
+  <!-- DATOS DEL CANDIDATO -->
+  <div class="screen" id="datos">
+    <div class="eyebrow">Amplifica · Tus datos</div>
+    <h1 style="font-size:30px;">Antes de comenzar</h1>
+    <div class="card" style="margin-top:20px;">
+      <div class="field">
+        <label for="fNombre">Nombre completo</label>
+        <input type="text" id="fNombre" placeholder="Ej: Tony Stark">
+        <div class="field-error" id="errNombre">Ingresa tu nombre completo.</div>
+      </div>
+      <div class="field">
+        <label for="fRut">RUT</label>
+        <input type="text" id="fRut" placeholder="Ej: 12.345.678-9">
+        <div class="field-error" id="errRut">Ingresa un RUT válido.</div>
+      </div>
+      <div class="field">
+        <label for="fCargo">Cargo al que postulas</label>
+        <input type="text" id="fCargo" placeholder="Ej: Analista de Comercio Exterior">
+        <div class="field-error" id="errCargo">Ingresa el cargo al que postulas.</div>
+      </div>
+      <div class="field">
+        <label for="fEmail">Correo de contacto</label>
+        <input type="email" id="fEmail" placeholder="tucorreo@ejemplo.com">
+        <div class="field-error" id="errEmail">Ingresa un correo válido.</div>
+      </div>
+      <button class="btn-primary" id="continueBtn">Comenzar evaluación</button>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="screen" id="quiz">
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="progressText">Bloque 1 de 26</span><span id="progressPct">4%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:4%"></div></div>
+    </div>
+    <div class="card">
+      <div class="block-instruction">Marca la frase que MÁS te representa y la que MENOS te representa.</div>
+      <div id="phraseContainer"></div>
+      <div class="nav-row">
+        <button class="btn-ghost" id="backBtn">← Volver</button>
+        <button class="btn-primary" id="nextBtn" disabled style="margin-top:0;">Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- THANK YOU (candidate-facing, no results shown) -->
+  <div class="screen" id="thanks">
+    <div class="card thanks-wrap">
+      <div class="thanks-icon">✓</div>
+      <h2>¡Gracias por completar la evaluación!</h2>
+      <p style="margin-top:12px;">Tus respuestas fueron registradas correctamente y serán revisadas por el equipo de Personas de Amplifica como parte de tu proceso de selección.</p>
+      <p style="margin-top:12px; font-size:13px; color:#9a9a9e;">Puedes cerrar esta ventana.</p>
+    </div>
+    <a href="#" class="link-quiet" id="adminLink">Acceso equipo de Personas</a>
+  </div>
+
+  <!-- ADMIN: passcode gate -->
+  <div class="screen" id="adminGate">
+    <div class="eyebrow">Amplifica · Panel interno</div>
+    <h1 style="font-size:28px;">Acceso equipo de Personas</h1>
+    <div class="card" style="margin-top:20px;">
+      <div class="field">
+        <label for="adminPass">Clave de acceso</label>
+        <input type="password" id="adminPass" placeholder="••••••">
+        <div class="field-error" id="errPass">Clave incorrecta.</div>
+      </div>
+      <button class="btn-primary" id="adminEnterBtn">Ingresar</button>
+    </div>
+  </div>
+
+  <!-- ADMIN: list -->
+  <div class="screen" id="adminList">
+    <div class="eyebrow">Amplifica · Panel interno</div>
+    <h1 style="font-size:28px;">Resultados recibidos</h1>
+    <div class="card" style="margin-top:20px;">
+      <div id="adminListContainer"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN: detail (results report) -->
+  <div class="screen" id="results">
+    <div class="eyebrow">Amplifica · Panel interno</div>
+    <button class="btn-ghost" id="backToListBtn" style="padding:0; margin-bottom:12px;">← Volver al listado</button>
+    <h1 style="font-size:28px;">Reporte de perfil DISC</h1>
+    <div class="card" style="margin-top:20px;">
+      <div class="candidate-meta" id="candidateMeta"></div>
+      <div class="profile-summary">
+        <div class="profile-code" id="profileCode">D-I</div>
+        <div class="profile-name" id="profileName">Perfil dominante</div>
+      </div>
+      <div class="bars" id="barsContainer"></div>
+      <div class="narrative">
+        <h3>Descripción del perfil</h3>
+        <p id="narrativeText"></p>
+      </div>
+
+      <div class="report-section">
+        <h3>Atributos</h3>
+        <div class="tag-pill-row" id="atributosContainer"></div>
+      </div>
+
+      <div class="report-section two-col">
+        <div>
+          <h3>Motivadores</h3>
+          <ul id="motivadoresList" style="padding-left:18px;"></ul>
+        </div>
+        <div>
+          <h3>Desmotivadores</h3>
+          <ul id="desmotivadoresList" style="padding-left:18px;"></ul>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Estilo de comunicación</h3>
+        <p id="comunicacionText"></p>
+      </div>
+
+      <div class="report-section">
+        <h3>Toma de decisiones</h3>
+        <p id="decisionText"></p>
+      </div>
+
+      <div class="report-section">
+        <h3>Supervisor ideal</h3>
+        <p id="supervisorText"></p>
+      </div>
+
+      <div class="report-section two-col">
+        <div class="list-col fortalezas">
+          <h4>Fortalezas</h4>
+          <ul id="fortalezasList"></ul>
+        </div>
+        <div class="list-col desarrollo">
+          <h4>Áreas de desarrollo</h4>
+          <ul id="desarrolloList"></ul>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Competencias comportamentales</h3>
+        <div id="competenciasContainer"></div>
+      </div>
+
+      <div class="disclaimer">
+        Este informe es una herramienta complementaria de apoyo al proceso de selección de Amplifica. No constituye un diagnóstico psicológico ni un criterio único de decisión. Los resultados deben interpretarse junto con la entrevista, la evaluación técnica y las referencias del candidato.
+      </div>
+      <div class="footer-actions">
+        <button class="btn-secondary" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── FIREBASE CONFIG (misma base de datos que la polla, nodo separado "disc") ──
+const DB_URL='https://polla-amplifica-default-rtdb.firebaseio.com';
+const ADMIN_PASSCODE="amplifica2026";
+
+// ---------- DATA: 26 bloques (d, i, s, c) ----------
+const BLOCKS = [
+["Toma decisiones rápido, incluso bajo presión","Disfruta conocer gente nueva","Prefiere rutinas y procesos estables","Revisa los detalles antes de actuar"],
+["Le gusta tener el control de las situaciones","Se entusiasma fácilmente con nuevas ideas","Es paciente frente a los cambios lentos","Sigue las normas y procedimientos establecidos"],
+["Enfrenta los desafíos de manera directa","Motiva a otros con facilidad","Escucha con calma antes de responder","Organiza su trabajo de forma metódica"],
+["Se orienta a resultados concretos","Se comunica de forma expresiva y cercana","Es leal y constante con su equipo","Busca la precisión en lo que hace"],
+["Asume riesgos con determinación","Genera buen ambiente en el grupo","Mantiene la calma en situaciones tensas","Analiza los datos antes de opinar"],
+["Le incomoda perder tiempo en detalles","Le gusta ser el centro de atención en reuniones","Prefiere trabajar en equipo antes que solo","Prefiere seguir un plan antes que improvisar"],
+["Impone su punto de vista cuando lo cree correcto","Persuade con facilidad a los demás","Se adapta sin resistencia a lo que se le pide","Detecta errores que otros pasan por alto"],
+["Actúa rápido, sin esperar demasiadas instrucciones","Expresa sus emociones abiertamente","Es predecible y consistente en su forma de trabajar","Cuestiona la información antes de aceptarla"],
+["Le gusta competir y ganar","Cuenta historias de forma entretenida","Da apoyo emocional a sus compañeros","Prefiere la exactitud a la rapidez"],
+["Delega poco porque prefiere hacerlo él/ella mismo/a","Se siente cómodo/a hablando en público","Evita los conflictos directos","Se guía por reglas claras más que por intuición"],
+["Presiona para que las cosas avancen rápido","Es optimista frente a los problemas","Necesita tiempo para adaptarse a lo nuevo","Documenta y respalda su trabajo con cuidado"],
+["Prioriza los resultados sobre las relaciones","Construye redes de contacto con facilidad","Es un buen mediador en conflictos de equipo","Prefiere procedimientos definidos antes que ambigüedad"],
+["Le cuesta aceptar un \"no\" como respuesta","Improvisa con soltura frente al público","Es tolerante con los ritmos de los demás","Es cauteloso/a antes de comprometerse"],
+["Se frustra con la lentitud de otros","Contagia entusiasmo al equipo","Prioriza la armonía del grupo","Prefiere tener toda la información antes de decidir"],
+["Va directo al punto sin rodeos","Disfruta trabajar con distintos tipos de personas","Es constante en el largo plazo","Se apega estrictamente a los estándares de calidad"],
+["Le gusta liderar los proyectos","Usa el humor para conectar con otros","Prefiere evitar cambios bruscos","Prefiere trabajar con datos antes que con opiniones"],
+["Insiste hasta lograr lo que se propone","Se involucra emocionalmente con las personas","Escucha activamente antes de opinar","Es reservado/a hasta tener certeza"],
+["Toma la iniciativa sin que se lo pidan","Le resulta fácil generar confianza rápidamente","Prefiere la estabilidad laboral antes que el cambio constante","Verifica dos veces antes de entregar un trabajo"],
+["Es exigente consigo mismo/a y con los demás","Anima al equipo en momentos difíciles","Es paciente para explicar las cosas varias veces","Prefiere lo comprobado antes que lo experimental"],
+["Prefiere actuar antes que planificar en exceso","Le gusta socializar fuera del trabajo también","Se adapta al ritmo del equipo","Sigue protocolos incluso bajo presión de tiempo"],
+["Confronta los problemas de frente","Convence con entusiasmo más que con datos","Es un pilar de estabilidad para el equipo","Prefiere el análisis profundo antes de opinar"],
+["Le gusta fijar metas ambiciosas","Se energiza al trabajar con otras personas","Prioriza mantener buenas relaciones a largo plazo","Es meticuloso/a con los procesos"],
+["Prefiere decidir solo/a y avisar después","Es espontáneo/a en su forma de comunicarse","Prefiere la rutina conocida antes que lo desconocido","Sigue una lógica estructurada para resolver problemas"],
+["Se impacienta con procesos muy burocráticos","Da buenas primeras impresiones","Es flexible con los cambios de última hora, aunque le cuesten","Prefiere revisar antes de enviar cualquier entregable"],
+["Asume el control cuando nadie más lo hace","Prefiere trabajar acompañado/a que en solitario","Necesita previsibilidad para rendir bien","Confía más en los hechos que en las impresiones"],
+["Le motivan los desafíos difíciles","Transmite entusiasmo de forma natural","Prefiere consenso antes que imposición","Es cuidadoso/a con cada detalle de su trabajo"]
+];
+const DIMS = ['d','i','s','c'];
+const DIM_LABEL = {d:'Dominancia', i:'Influencia', s:'Estabilidad', c:'Cumplimiento'};
+const DIM_COLOR = {d:'#121755', i:'#F7DC4B', s:'#4548FF', c:'#1D1D1F'};
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+const blockOrder = shuffle(BLOCKS.map((_,i)=>i));
+const session = blockOrder.map(idx=>{
+  const phrases = DIMS.map((d,i)=>({dim:d, text:BLOCKS[idx][i]}));
+  return shuffle(phrases);
+});
+
+let current = 0;
+const answers = new Array(session.length).fill(null);
+let candidate = { nombre:'', rut:'', cargo:'', email:'' };
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ---- INTRO ----
+const consentCheck = document.getElementById('consentCheck');
+const startBtn = document.getElementById('startBtn');
+consentCheck.addEventListener('change', ()=>{ startBtn.disabled = !consentCheck.checked; });
+startBtn.addEventListener('click', ()=>{ showScreen('datos'); });
+
+// ---- DATOS ----
+function validateRut(rut){
+  return /^[0-9]{6,9}-[0-9kK]{1}$|^[0-9]{1,3}(\.[0-9]{3}){1,2}-[0-9kK]{1}$/.test(rut.trim());
+}
+function validateEmail(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+document.getElementById('continueBtn').addEventListener('click', ()=>{
+  const nombre = document.getElementById('fNombre').value.trim();
+  const rut = document.getElementById('fRut').value.trim();
+  const cargo = document.getElementById('fCargo').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  let valid = true;
+
+  document.getElementById('errNombre').style.display = nombre.length < 3 ? 'block' : 'none';
+  if(nombre.length < 3) valid = false;
+
+  document.getElementById('errRut').style.display = !validateRut(rut) ? 'block' : 'none';
+  if(!validateRut(rut)) valid = false;
+
+  document.getElementById('errCargo').style.display = cargo.length < 2 ? 'block' : 'none';
+  if(cargo.length < 2) valid = false;
+
+  document.getElementById('errEmail').style.display = !validateEmail(email) ? 'block' : 'none';
+  if(!validateEmail(email)) valid = false;
+
+  if(!valid) return;
+  candidate = { nombre, rut, cargo, email };
+  showScreen('quiz');
+  renderBlock();
+});
+
+// ---- QUIZ ----
+function renderBlock(){
+  const block = session[current];
+  const saved = answers[current] || {mas:null, menos:null};
+  const container = document.getElementById('phraseContainer');
+  container.innerHTML = '';
+  block.forEach((phrase, i)=>{
+    const row = document.createElement('div');
+    row.className = 'phrase-row';
+    row.innerHTML = `
+      <div class="phrase-text">${phrase.text}</div>
+      <div class="tag-buttons">
+        <button class="tag-btn mas ${saved.mas===i?'selected':''}" data-idx="${i}" data-type="mas">MÁS</button>
+        <button class="tag-btn menos ${saved.menos===i?'selected':''}" data-idx="${i}" data-type="menos">MENOS</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  container.querySelectorAll('.tag-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const idx = parseInt(btn.dataset.idx);
+      const type = btn.dataset.type;
+      if(!answers[current]) answers[current] = {mas:null, menos:null};
+      if(type==='mas'){
+        if(answers[current].menos===idx) return;
+        answers[current].mas = answers[current].mas===idx ? null : idx;
+      } else {
+        if(answers[current].mas===idx) return;
+        answers[current].menos = answers[current].menos===idx ? null : idx;
+      }
+      renderBlock();
+    });
+  });
+  document.getElementById('progressText').textContent = `Bloque ${current+1} de ${session.length}`;
+  const pct = Math.round(((current+1)/session.length)*100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('backBtn').style.visibility = current===0 ? 'hidden' : 'visible';
+  updateNav();
+}
+function updateNav(){
+  const a = answers[current];
+  const complete = a && a.mas!==null && a.menos!==null;
+  document.getElementById('nextBtn').disabled = !complete;
+  document.getElementById('nextBtn').textContent = current===session.length-1 ? 'Finalizar' : 'Siguiente';
+}
+document.getElementById('backBtn').addEventListener('click', ()=>{ if(current>0){ current--; renderBlock(); } });
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(current<session.length-1){ current++; renderBlock(); }
+  else { finishQuiz(); }
+});
+
+function computeScores(){
+  const raw = {d:0,i:0,s:0,c:0};
+  session.forEach((block, bi)=>{
+    const a = answers[bi];
+    if(!a) return;
+    raw[block[a.mas].dim] += 1;
+    raw[block[a.menos].dim] -= 1;
+  });
+  return raw;
+}
+function levelFor(score){
+  if(score>=8) return 'Alto';
+  if(score<=-8) return 'Bajo';
+  return 'Medio';
+}
+
+const NARRATIVES = {
+  d:"Persona orientada a resultados, decidida y directa. Le motivan los desafíos y el logro de metas concretas. Puede tender a la impaciencia con procesos lentos o muy detallados, y a priorizar la tarea por sobre la relación.",
+  i:"Persona sociable, entusiasta y persuasiva. Genera buen clima y motiva a otros con facilidad. Puede tender a la dispersión en tareas muy estructuradas o repetitivas, y a subestimar los detalles operativos.",
+  s:"Persona paciente, leal y constante. Aporta calma y consistencia al equipo, y se adapta bien al trabajo colaborativo. Puede tender a la resistencia frente a cambios bruscos y a evitar el conflicto incluso cuando es necesario.",
+  c:"Persona precisa, analítica y apegada a normas y procesos. Aporta rigurosidad y calidad al trabajo. Puede tender a la sobreanálisis, a la lentitud en la toma de decisiones bajo incertidumbre y a la crítica excesiva de errores propios o ajenos."
+};
+const COMBO_NARRATIVES = {
+  'd-i':"Líder natural, decidido y carismático. Bueno para movilizar equipos hacia metas ambiciosas. Riesgo: puede pasar por alto detalles o la opinión de perfiles más cautelosos.",
+  'i-d':"Líder natural, decidido y carismático. Bueno para movilizar equipos hacia metas ambiciosas. Riesgo: puede pasar por alto detalles o la opinión de perfiles más cautelosos.",
+  'd-c':"Analítico y ejecutor. Toma decisiones basadas en datos y las lleva a cabo con disciplina. Riesgo: puede ser percibido como rígido o poco empático en la forma de comunicar.",
+  'c-d':"Analítico y ejecutor. Toma decisiones basadas en datos y las lleva a cabo con disciplina. Riesgo: puede ser percibido como rígido o poco empático en la forma de comunicar.",
+  'i-s':"Cercano y colaborador. Genera confianza y sostiene relaciones de largo plazo. Riesgo: puede evitar decisiones difíciles por no generar tensión.",
+  's-i':"Cercano y colaborador. Genera confianza y sostiene relaciones de largo plazo. Riesgo: puede evitar decisiones difíciles por no generar tensión.",
+  's-c':"Confiable y meticuloso/a. Ideal para procesos que requieren consistencia y precisión sostenida. Riesgo: puede costarle adaptarse a cambios rápidos o ambigüedad.",
+  'c-s':"Confiable y meticuloso/a. Aporta orden y control de calidad, con énfasis en normas y procedimientos formales. Riesgo: puede sentirse incómodo/a en entornos muy cambiantes.",
+  'd-s':"Combina firmeza en la toma de decisiones con constancia en la ejecución. Aporta estabilidad incluso en contextos exigentes.",
+  's-d':"Combina firmeza en la toma de decisiones con constancia en la ejecución. Aporta estabilidad incluso en contextos exigentes.",
+  'i-c':"Combina cercanía interpersonal con atención al detalle. Comunica de forma cálida sin descuidar la precisión.",
+  'c-i':"Combina cercanía interpersonal con atención al detalle. Comunica de forma cálida sin descuidar la precisión."
+};
+
+// ---- Contenido detallado por dimensión dominante (elaboración propia de Amplifica) ----
+const PROFILE_DETAIL = {
+  d: {
+    atributos: ["Decidido/a","Directo/a","Seguro/a de sí mismo/a","Competitivo/a","Orientado/a a la acción","Asertivo/a","Independiente","Exigente","Pragmático/a"],
+    motivadores: ["Autonomía para decidir","Desafíos concretos y metas ambiciosas","Resultados medibles","Reconocimiento por logros","Autoridad real para actuar"],
+    desmotivadores: ["Procesos burocráticos lentos","Microgestión constante","Falta de autonomía","Tareas repetitivas sin desafío","Ambigüedad prolongada"],
+    comunicacion: "Directo y breve, va al grano y prefiere conclusiones antes que contexto extenso. Puede sonar brusco bajo presión y valora la franqueza en los demás.",
+    decision: "Rápida y autónoma, basada en el resultado esperado más que en el consenso. Puede subestimar el análisis detallado o la opinión de otros si percibe que retrasa el avance.",
+    supervisor: "Necesita un supervisor que delegue con claridad, dé autonomía real, entregue feedback directo y no imponga controles ni supervisión excesiva.",
+    fortalezas: ["Iniciativa y capacidad de decisión bajo presión","Orientación a resultados","Disposición a asumir riesgos calculados","Liderazgo natural en momentos de crisis"],
+    desarrollo: ["Escuchar antes de decidir","Delegar sin perder el control del resultado","Moderar la impaciencia con procesos o personas más metódicas","Cuidar el impacto de su forma de comunicar"]
+  },
+  i: {
+    atributos: ["Sociable","Expresivo/a","Optimista","Persuasivo/a","Entusiasta","Espontáneo/a","Cálido/a","Comunicativo/a","Flexible en el trato"],
+    motivadores: ["Reconocimiento social","Interacción constante con personas","Ambientes dinámicos","Libertad para expresar ideas","Buen clima laboral"],
+    desmotivadores: ["Aislamiento y tareas solitarias","Ambientes fríos o muy formales","Falta de espacio para socializar","Exceso de reglas rígidas","Rutinas muy repetitivas"],
+    comunicacion: "Expresivo, cercano y entusiasta. Comunica con emoción y busca conectar antes de entrar en detalles técnicos; puede extenderse más de lo necesario.",
+    decision: "Intuitiva y rápida, influida por el entusiasmo del momento y la opinión de otros. Puede pasar por alto el análisis detallado de riesgos.",
+    supervisor: "Necesita un supervisor cercano, que reconozca sus logros públicamente, permita espacio de interacción social y no sea excesivamente rígido con los procedimientos.",
+    fortalezas: ["Generar buen clima de trabajo","Motivar a otros","Construir relaciones de confianza rápidamente","Comunicar ideas con entusiasmo contagioso"],
+    desarrollo: ["Sostener el foco en tareas de detalle","Seguir procesos hasta el final","Moderar el optimismo con análisis de riesgos","Cumplir plazos sin depender solo de la motivación"]
+  },
+  s: {
+    atributos: ["Paciente","Leal","Constante","Buen/a oyente","Colaborador/a","Calmado/a","Confiable","Discreto/a","Adaptable al ritmo del equipo"],
+    motivadores: ["Estabilidad laboral","Ambiente de trabajo predecible","Buenas relaciones de largo plazo","Reconocimiento sincero","Tiempo suficiente para adaptarse a los cambios"],
+    desmotivadores: ["Cambios bruscos sin aviso","Conflictos abiertos","Presión por decisiones rápidas sin tiempo de análisis","Ambientes de alta rotación o inestabilidad"],
+    comunicacion: "Tranquilo, atento y respetuoso. Escucha antes de opinar, evita el conflicto directo y busca el consenso antes de imponer su punto de vista.",
+    decision: "Reflexiva y prudente. Prefiere contar con tiempo, información suficiente y el respaldo del equipo antes de decidir; puede postergar decisiones difíciles.",
+    supervisor: "Necesita un supervisor paciente, que explique el 'por qué' de los cambios, dé tiempo para adaptarse y reconozca el trabajo constante sin exigir decisiones bajo presión permanente.",
+    fortalezas: ["Consistencia y lealtad al equipo","Capacidad de mediar conflictos","Confiabilidad en tareas de largo plazo","Buen soporte emocional para otros"],
+    desarrollo: ["Adaptarse con mayor rapidez a cambios inesperados","Tomar postura en situaciones de conflicto cuando es necesario","Expresar desacuerdo de forma más directa"]
+  },
+  c: {
+    atributos: ["Preciso/a","Analítico/a","Metódico/a","Cauteloso/a","Orientado/a al detalle","Disciplinado/a","Reservado/a","Crítico/a constructivo/a"],
+    motivadores: ["Información completa antes de actuar","Procesos claros y bien documentados","Estándares de calidad altos","Tiempo para analizar antes de decidir","Reconocimiento por la precisión de su trabajo"],
+    desmotivadores: ["Ambigüedad","Decisiones apresuradas sin datos","Incoherencias entre lo que se dice y se hace","Falta de tiempo para revisar el trabajo","Críticas informales sin fundamento"],
+    comunicacion: "Reservado y preciso. Prefiere argumentar con datos antes que con opiniones; puede parecer distante o excesivamente crítico si el interlocutor no maneja el mismo nivel de detalle.",
+    decision: "Analítica y cautelosa, basada en evidencia y en la revisión exhaustiva de alternativas. Puede demorar más de lo esperado cuando falta información.",
+    supervisor: "Necesita un supervisor organizado, que entregue instrucciones claras y por escrito, respete los tiempos de análisis y no presione con decisiones improvisadas.",
+    fortalezas: ["Rigurosidad y atención al detalle","Calidad consistente del trabajo","Capacidad de anticipar errores","Pensamiento estructurado"],
+    desarrollo: ["Actuar con mayor rapidez cuando la situación lo requiere","Tolerar mejor la ambigüedad","Flexibilizar estándares cuando el contexto lo amerita","Comunicar el feedback de forma menos crítica"]
+  }
+};
+
+// ---- Competencias comportamentales calculadas a partir del DISC ----
+const COMPETENCIAS = [
+  { key:'escucha', label:'Capacidad de escucha', desc:'Habilidad para comprender lo que otros comunican, en contenido y en emoción.', weights:{d:0, i:0.30, s:0.45, c:0.25} },
+  { key:'comunicacion_hab', label:'Habilidades de comunicación', desc:'Capacidad de transmitir ideas de forma clara y adaptada al interlocutor.', weights:{d:0.25, i:0.55, s:0.20, c:0} },
+  { key:'manejo_equipos', label:'Manejo de equipos', desc:'Capacidad de organizar, coordinar y dirigir el trabajo de un grupo.', weights:{d:0.45, i:0.30, s:0.25, c:0} },
+  { key:'motivacion_otros', label:'Motivación a otros', desc:'Capacidad de inspirar y movilizar a otras personas hacia una meta.', weights:{d:0.30, i:0.55, s:0.15, c:0} },
+  { key:'orientacion_resultados', label:'Orientación a resultados', desc:'Capacidad de enfocar el esfuerzo hacia el logro de metas concretas.', weights:{d:0.55, i:0.20, s:0, c:0.25} },
+  { key:'toma_decisiones_comp', label:'Toma de decisiones', desc:'Capacidad de resolver y elegir entre alternativas de forma oportuna.', weights:{d:0.50, i:0.20, s:0, c:0.30} },
+  { key:'vision_futuro', label:'Visión de futuro', desc:'Capacidad de anticipar escenarios y proyectar el trabajo a mediano y largo plazo.', weights:{d:0.40, i:0.25, s:0, c:0.35} },
+  { key:'servicio_cliente', label:'Servicio al cliente', desc:'Capacidad de generar una experiencia positiva y de confianza en quienes reciben el servicio.', weights:{d:0, i:0.35, s:0.45, c:0.20} }
+];
+
+function pctFromRaw(score){ return Math.max(0, Math.min(100, Math.round(((score+26)/52)*100))); }
+
+function computeCompetencies(raw){
+  const pct = { d: pctFromRaw(raw.d), i: pctFromRaw(raw.i), s: pctFromRaw(raw.s), c: pctFromRaw(raw.c) };
+  return COMPETENCIAS.map(comp=>{
+    const value = Math.round(comp.weights.d*pct.d + comp.weights.i*pct.i + comp.weights.s*pct.s + comp.weights.c*pct.c);
+    return { label:comp.label, desc:comp.desc, value };
+  });
+}
+
+function buildRecord(){
+  const raw = computeScores();
+  return {
+    nombre: candidate.nombre,
+    rut: candidate.rut,
+    cargo: candidate.cargo,
+    email: candidate.email,
+    scores: raw,
+    submittedAt: new Date().toISOString()
+  };
+}
+
+// ---- Persistencia (Firebase Realtime Database, nodo "disc/results") ----
+async function finishQuiz(){
+  const record = buildRecord();
+  const safeKey = record.rut.replace(/[^a-zA-Z0-9]/g,'') + '_' + Date.now();
+  try{
+    await fetch(`${DB_URL}/disc/results/${safeKey}.json`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(record)
+    });
+  }catch(e){
+    console.error('No se pudo guardar el resultado', e);
+  }
+  showScreen('thanks');
+}
+
+// ---- ADMIN ----
+document.getElementById('adminLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  showScreen('adminGate');
+});
+document.getElementById('adminLinkIntro').addEventListener('click', (e)=>{
+  e.preventDefault();
+  showScreen('adminGate');
+});
+document.getElementById('adminEnterBtn').addEventListener('click', async ()=>{
+  const pass = document.getElementById('adminPass').value;
+  if(pass !== ADMIN_PASSCODE){
+    document.getElementById('errPass').style.display = 'block';
+    return;
+  }
+  document.getElementById('errPass').style.display = 'none';
+  await renderAdminList();
+  showScreen('adminList');
+});
+
+let adminRecords = [];
+async function renderAdminList(){
+  const container = document.getElementById('adminListContainer');
+  container.innerHTML = '<div class="empty-state">Cargando...</div>';
+  adminRecords = [];
+  try{
+    const r = await fetch(`${DB_URL}/disc/results.json?nocache=`+Date.now());
+    const data = await r.json();
+    if(data && typeof data === 'object'){
+      Object.keys(data).forEach(key=>{
+        const record = data[key];
+        record._key = key;
+        adminRecords.push(record);
+      });
+    }
+  }catch(e){
+    console.error('No se pudo listar resultados', e);
+  }
+  adminRecords.sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
+
+  if(adminRecords.length===0){
+    container.innerHTML = '<div class="empty-state">Aún no hay resultados registrados.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  adminRecords.forEach((record, i)=>{
+    const raw = record.scores;
+    const sorted = DIMS.slice().sort((a,b)=>raw[b]-raw[a]);
+    const top1 = sorted[0], top2 = sorted[1];
+    const closeGap = Math.abs(raw[top1]-raw[top2]) <= 3;
+    const code = closeGap ? `${top1.toUpperCase()}-${top2.toUpperCase()}` : top1.toUpperCase();
+    const item = document.createElement('div');
+    item.className = 'admin-item';
+    item.innerHTML = `
+      <div>
+        <div class="admin-item-name">${record.nombre}</div>
+        <div class="admin-item-sub">${record.cargo} · ${new Date(record.submittedAt).toLocaleDateString('es-CL')}</div>
+      </div>
+      <div class="admin-item-code">${code}</div>
+    `;
+    item.addEventListener('click', ()=>{ showResultDetail(record); });
+    container.appendChild(item);
+  });
+}
+document.getElementById('backToListBtn').addEventListener('click', ()=>{ showScreen('adminList'); });
+
+function showResultDetail(record){
+  showScreen('results');
+  const raw = record.scores;
+  const sorted = DIMS.slice().sort((a,b)=>raw[b]-raw[a]);
+  const top1 = sorted[0], top2 = sorted[1];
+  const closeGap = Math.abs(raw[top1]-raw[top2]) <= 3;
+  const code = closeGap ? `${top1.toUpperCase()}-${top2.toUpperCase()}` : top1.toUpperCase();
+
+  document.getElementById('candidateMeta').innerHTML = `
+    <div><strong>Nombre:</strong> ${record.nombre}</div>
+    <div><strong>RUT:</strong> ${record.rut}</div>
+    <div><strong>Cargo postulado:</strong> ${record.cargo}</div>
+    <div><strong>Correo:</strong> ${record.email}</div>
+    <div><strong>Fecha:</strong> ${new Date(record.submittedAt).toLocaleString('es-CL')}</div>
+  `;
+  document.getElementById('profileCode').textContent = code;
+  document.getElementById('profileName').textContent = closeGap ? `${DIM_LABEL[top1]} · ${DIM_LABEL[top2]}` : DIM_LABEL[top1];
+
+  const narrative = closeGap ? (COMBO_NARRATIVES[`${top1}-${top2}`] || NARRATIVES[top1]) : NARRATIVES[top1];
+  document.getElementById('narrativeText').textContent = narrative;
+
+  // Secciones detalladas: se basan en la dimensión dominante (top1)
+  const detail = PROFILE_DETAIL[top1];
+
+  const atribContainer = document.getElementById('atributosContainer');
+  atribContainer.innerHTML = detail.atributos.map(a=>`<span class="tag-pill">${a}</span>`).join('');
+
+  document.getElementById('motivadoresList').innerHTML = detail.motivadores.map(m=>`<li>${m}</li>`).join('');
+  document.getElementById('desmotivadoresList').innerHTML = detail.desmotivadores.map(m=>`<li>${m}</li>`).join('');
+  document.getElementById('comunicacionText').textContent = detail.comunicacion;
+  document.getElementById('decisionText').textContent = detail.decision;
+  document.getElementById('supervisorText').textContent = detail.supervisor;
+  document.getElementById('fortalezasList').innerHTML = detail.fortalezas.map(f=>`<li>${f}</li>`).join('');
+  document.getElementById('desarrolloList').innerHTML = detail.desarrollo.map(d=>`<li>${d}</li>`).join('');
+
+  const competencias = computeCompetencies(raw);
+  const compContainer = document.getElementById('competenciasContainer');
+  compContainer.innerHTML = '';
+  competencias.forEach(comp=>{
+    const row = document.createElement('div');
+    row.className = 'competency-row';
+    row.innerHTML = `
+      <div class="competency-head"><span>${comp.label}</span><span>${comp.value}%</span></div>
+      <div class="competency-desc">${comp.desc}</div>
+      <div class="competency-track"><div class="competency-fill"></div></div>
+    `;
+    compContainer.appendChild(row);
+    requestAnimationFrame(()=>{ setTimeout(()=>{ row.querySelector('.competency-fill').style.width = comp.value + '%'; }, 50); });
+  });
+
+  const barsContainer = document.getElementById('barsContainer');
+  barsContainer.innerHTML = '';
+  DIMS.forEach(dim=>{
+    const score = raw[dim];
+    const pct = Math.max(0, Math.round(((score+26)/52)*100));
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-head"><span>${dim.toUpperCase()} · ${DIM_LABEL[dim]}</span><span>${score>=0?'+':''}${score}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="background:${DIM_COLOR[dim]}"></div></div>
+      <div class="bar-level">Nivel: ${levelFor(score)}</div>
+    `;
+    barsContainer.appendChild(row);
+    requestAnimationFrame(()=>{ setTimeout(()=>{ row.querySelector('.bar-fill').style.width = pct + '%'; }, 50); });
+  });
+}
+</script>
+</body>
+</html>
