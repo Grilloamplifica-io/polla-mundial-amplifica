@@ -1650,10 +1650,12 @@ async function loadR8Results(){
   const btn=document.getElementById('btn-load-r8-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
   // Francia 2-0 Marruecos (9 jul) — Marruecos=top(h), Francia=bottom(a)
   DB.ko['ko_r8_0_h']='0';DB.ko['ko_r8_0_a']='2';
+  // España 2-1 Bélgica (10 jul) — España=top(h), Bélgica=bottom(a)
+  DB.ko['ko_r8_2_h']='2';DB.ko['ko_r8_2_a']='1';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados cuartos';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Cuartos cargados: Francia 2-0 Marruecos</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Cuartos cargados: Francia 2-0 Marruecos · España 2-1 Bélgica</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
