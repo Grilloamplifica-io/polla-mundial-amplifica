@@ -534,6 +534,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <button class="btn-auto" onclick="fixR8Times()" style="border-color:#34d399;color:#a7f3d0;"><i class="ti ti-clock"></i> Fijar horarios cuartos</button>
         <button class="btn-auto" id="btn-load-r8-results" onclick="loadR8Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados cuartos</button>
+        <button class="btn-auto" onclick="fixR4Teams()" style="border-color:#f59e0b;color:#fde68a;"><i class="ti ti-trophy"></i> Fijar equipos y horarios semis</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -1151,7 +1152,10 @@ function getKoTeam(rk,matchIdx,side){
     if(r32idx!==undefined){const w=_koWinner('r32',r32idx);if(w)return w;}
     return{name:'Clasificado',flag:'🏳️',tbd:true};
   }
-  // r8, r4, r2: derivar secuencialmente desde r16
+  // r8, r4, r2: primero verificar override explícito en DB
+  const explicit=DB.ko[`ko_team_${rk}_${matchIdx}_${side}`];
+  if(explicit)return{name:explicit,flag:flag(explicit),tbd:false};
+  // derivar secuencialmente desde ronda anterior
   const ri=KO_STRUCTURE.findIndex(r=>r.key===rk);
   const prev=KO_STRUCTURE[ri-1];
   const prevIdx=matchIdx*2+side;
@@ -2011,6 +2015,21 @@ function renderMisPicks(){
 // ─── ADMIN USER MANAGEMENT ────────────────────────────────────────────────────
 let adminEditUid = null;
 
+async function fixR4Teams(){
+  // Semi 1 (r4_0): Francia vs España — mar 14 jul 15:00 CLT = 19:00 UTC
+  DB.ko['ko_team_r4_0_0']='Francia';
+  DB.ko['ko_team_r4_0_1']='España';
+  DB.ko['ko_time_r4_0']='2026-07-14T19:00:00Z';
+  // Semi 2 (r4_1): Argentina vs Inglaterra — mié 15 jul 15:00 CLT = 19:00 UTC
+  DB.ko['ko_team_r4_1_0']='Argentina';
+  DB.ko['ko_team_r4_1_1']='Inglaterra';
+  DB.ko['ko_time_r4_1']='2026-07-15T19:00:00Z';
+  await dbSave();
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Semis fijadas: Francia-España mar 14 jul 15:00 CLT · Argentina-Inglaterra mié 15 jul 15:00 CLT</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
 async function deleteAndBlockUser(uid, name){
   if(!confirm(`¿Eliminar y bloquear a ${name}? Esta acción no se puede deshacer.`))return;
   if(!DB.blocked)DB.blocked={};
