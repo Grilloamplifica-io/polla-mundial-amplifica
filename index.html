@@ -536,6 +536,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <button class="btn-auto" id="btn-load-r8-results" onclick="loadR8Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados cuartos</button>
         <button class="btn-auto" onclick="fixR4Teams()" style="border-color:#f59e0b;color:#fde68a;"><i class="ti ti-trophy"></i> Fijar equipos y horarios semis</button>
         <button class="btn-auto" id="btn-load-r4-results" onclick="loadR4Results()" style="border-color:#e879f9;color:#fae8ff;"><i class="ti ti-circle-check"></i> Cargar resultados semis</button>
+        <button class="btn-auto" id="btn-load-r2-results" onclick="loadR2Results()" style="border-color:#f59e0b;color:#fde68a;"><i class="ti ti-trophy"></i> Cargar resultado final</button>
         <div id="ai-status" style="margin-top:10px;display:none;">
           <div style="display:flex;align-items:center;gap:8px;color:var(--amp-yellow);font-size:12px;margin-bottom:6px;"><div class="spinner"></div><span id="ai-status-text">Buscando...</span></div>
           <div class="ai-log" id="ai-log"></div>
@@ -2020,10 +2021,24 @@ async function loadR4Results(){
   const btn=document.getElementById('btn-load-r4-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
   // España 2-0 Francia (14 jul) — Francia=top(h), España=bottom(a)
   DB.ko['ko_r4_0_h']='0';DB.ko['ko_r4_0_a']='2';
+  // Argentina 2-1 Inglaterra (15 jul) — Argentina=top(h), Inglaterra=bottom(a)
+  DB.ko['ko_r4_1_h']='2';DB.ko['ko_r4_1_a']='1';
+  // Tiempo de la final (r2_0): dom 19 jul 16:00 CLT = 20:00 UTC
+  DB.ko['ko_time_r2_0']='2026-07-19T20:00:00Z';
   await dbSave();
   btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultados semis';
   const doneEl=document.getElementById('ai-done');
-  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Semis cargadas: España 2-0 Francia</div>';
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Semis cargadas: España 2-0 Francia · Argentina 2-1 Inglaterra · Final: dom 19 jul 16:00 CLT</div>';
+  doneEl.style.display='block';
+  renderKo();renderAdmin();buildTicker();
+}
+async function loadR2Results(){
+  const btn=document.getElementById('btn-load-r2-results');btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Cargando...';
+  // Final pendiente — completar con el resultado
+  await dbSave();
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-circle-check"></i> Cargar resultado final';
+  const doneEl=document.getElementById('ai-done');
+  doneEl.innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i> Resultado final cargado</div>';
   doneEl.style.display='block';
   renderKo();renderAdmin();buildTicker();
 }
