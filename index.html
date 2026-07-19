@@ -1928,6 +1928,19 @@ function showTab(tab){
   if(tab==='admin'&&currentUser?.isAdmin)renderAdmin();
 }
 
+function calcBreakdown(uid,picks,koPicks,special){
+  picks=picks||DB.users[uid]?.picks||{};koPicks=koPicks||DB.users[uid]?.koPicks||{};special=special||DB.users[uid]?.special||{};
+  let grupos=0,ko=0,champ=0,especiales=0;
+  let gruposExactos=0,gruposResultado=0;
+  if(picks['champ']&&DB.results['champ']&&picks['champ']===DB.results['champ'])champ+=5;
+  for(const g of Object.values(GROUPS)){for(const m of g.matches){if(!picks[m.key]||!DB.results[m.key])continue;const ph=parseInt(picks[m.key][0]),pa=parseInt(picks[m.key][1]),rh=parseInt(DB.results[m.key][0]),ra=parseInt(DB.results[m.key][1]);if(ph===rh&&pa===ra){grupos+=3;gruposExactos++;}else if((ph>pa&&rh>ra)||(ph<pa&&rh<ra)||(ph===pa&&rh===ra)){grupos+=1;gruposResultado++;}}}
+  KO_STRUCTURE.forEach(round=>{for(let m=0;m<round.count;m++){const key=getKoMatchKey(round.key,m);const pH=koPicks[key+'_h'],pA=koPicks[key+'_a'],rH=DB.ko[key+'_h'],rA=DB.ko[key+'_a'];if(pH===undefined||rH===undefined)continue;const phi=parseInt(pH),pai=parseInt(pA),rhi=parseInt(rH),rai=parseInt(rA);if(phi===rhi&&pai===rai)ko+=3;else if((phi>pai&&rhi>rai)||(phi<pai&&rhi<rai))ko+=1;}});
+  if(koPicks['ko_champ']&&DB.ko['ko_champ']&&koPicks['ko_champ']===DB.ko['ko_champ'])ko+=5;
+  if(special.scorer&&DB.results.scorer&&special.scorer.toLowerCase()===DB.results.scorer.toLowerCase())especiales+=5;
+  ['p1','p2','p3'].forEach(k=>{if(special[k]&&DB.results[k]&&special[k]===DB.results[k])especiales+=3;});
+  return {grupos,gruposExactos,gruposResultado,ko,champ,especiales,total:grupos+ko+champ+especiales};
+}
+
 function renderMisPicks(){
   if(!currentUser)return;
   const ud=DB.users[currentUser.uid]||{};
@@ -1943,7 +1956,28 @@ function renderMisPicks(){
   const bn=document.getElementById('banner-name-mispicks');if(bn)bn.textContent=currentUser.name;
   const bp=document.getElementById('banner-pts-mispicks');if(bp)bp.textContent=pts+' pts · ⭐ '+spts+' esp';
 
+  const bd=calcBreakdown(currentUser.uid,picks,koPicks,special);
+  const hasAnyResult=Object.keys(DB.results).some(k=>k!=='_lastUpdated'&&Array.isArray(DB.results[k]))||DB.results.champ||DB.results.scorer;
   let html='';
+
+  // Points breakdown card
+  if(hasAnyResult){
+    const row=(icon,label,val,sub)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">${icon}</span><div><div style="font-size:13px;font-weight:600;color:#e2e8f0;">${label}</div>${sub?`<div style="font-size:10px;color:#94a3b8;">${sub}</div>`:''}</div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:${val>0?'#fbbf24':'#64748b'};">${val>0?'+'+val:val} pts</div>
+    </div>`;
+    html+=`<div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📊 Desglose de puntos</div>
+      ${row('⚽','Fase de grupos',bd.grupos,bd.gruposExactos||bd.gruposResultado?`${bd.gruposExactos} exacto${bd.gruposExactos!==1?'s':''} · ${bd.gruposResultado} resultado${bd.gruposResultado!==1?'s':''}`:'Sin resultados aún')}
+      ${row('🏆','Eliminatoria',bd.ko,'')}
+      ${row('🌟','Campeón apostado',bd.champ,bd.champ?'¡Acertaste!':DB.results.champ?'No acertaste':'')}
+      ${row('⭐','Apuestas especiales',bd.especiales,'')}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;margin-top:4px;">
+        <div style="font-size:13px;font-weight:700;color:#cbd5e1;">Total</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#fbbf24;">${bd.total} pts</div>
+      </div>
+    </div>`;
+  }
 
   // Champion pick
   const champPick=picks['champ']||'';
