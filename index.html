@@ -1962,19 +1962,74 @@ function renderMisPicks(){
 
   // Points breakdown card
   if(hasAnyResult){
-    const row=(icon,label,val,sub)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid rgba(255,255,255,0.08);">
-      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:16px;">${icon}</span><div><div style="font-size:13px;font-weight:600;color:#e2e8f0;">${label}</div>${sub?`<div style="font-size:10px;color:#94a3b8;">${sub}</div>`:''}</div></div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:${val>0?'#fbbf24':'#64748b'};">${val>0?'+'+val:val} pts</div>
+    const mainTotal=bd.grupos+bd.ko+bd.champ;
+    const sepTotal=bd.especiales;
+
+    // Helper: one line with icon, label, detail, and points
+    const line=(icon,label,detail,pts,hit)=>{
+      const c=hit===true?'#4ade80':hit===false?'#f87171':'#94a3b8';
+      const ptsStr=pts>0?`+${pts}`:pts===0&&hit===false?'0':'—';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <span style="font-size:14px;flex-shrink:0;">${icon}</span>
+          <div style="min-width:0;">
+            <span style="font-size:12px;font-weight:600;color:#e2e8f0;">${label}</span>
+            ${detail?`<span style="font-size:11px;color:${c};margin-left:5px;">${detail}</span>`:''}
+          </div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:${pts>0?'#fbbf24':'#475569'};flex-shrink:0;margin-left:8px;">${ptsStr}</div>
+      </div>`;
+    };
+
+    const sectionTitle=(t)=>`<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin:10px 0 4px;">${t}</div>`;
+    const subtotal=(label,val,color)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;margin-top:2px;">
+      <span style="font-size:12px;font-weight:700;color:${color};">${label}</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:${color};">${val>0?'+'+val:val} pts</span>
     </div>`;
-    html+=`<div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #334155;border-radius:12px;padding:14px;margin-bottom:16px;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📊 Desglose de puntos</div>
-      ${row('⚽','Fase de grupos',bd.grupos,bd.gruposExactos||bd.gruposResultado?`${bd.gruposExactos} exacto${bd.gruposExactos!==1?'s':''} · ${bd.gruposResultado} resultado${bd.gruposResultado!==1?'s':''}`:'Sin resultados aún')}
-      ${row('🏆','Eliminatoria',bd.ko,'')}
-      ${row('🌟','Campeón apostado',bd.champ,bd.champ?'¡Acertaste!':DB.results.champ?'No acertaste':'')}
-      ${row('⭐','Apuestas especiales',bd.especiales,'')}
-      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;margin-top:4px;">
-        <div style="font-size:13px;font-weight:700;color:#cbd5e1;">Total</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#fbbf24;">${bd.total} pts</div>
+
+    // Picks normales
+    let normalHtml=sectionTitle('Picks normales');
+    normalHtml+=line('⚽','Grupos — Marcador exacto',
+      bd.gruposExactos>0?`${bd.gruposExactos} × 3 pts = ${bd.gruposExactos*3} pts`:bd.gruposExactos===0&&bd.gruposResultado>0?'Ninguno exacto':'',
+      bd.gruposExactos*3, bd.gruposExactos>0?true:null);
+    normalHtml+=line('✅','Grupos — Resultado correcto',
+      bd.gruposResultado>0?`${bd.gruposResultado} × 1 pt = ${bd.gruposResultado} pts`:'',
+      bd.gruposResultado, bd.gruposResultado>0?true:null);
+    normalHtml+=line('🏟️','Eliminatoria',bd.ko>0?`${bd.ko} pts`:'Sin resultados aún',bd.ko,bd.ko>0?true:null);
+    const champPk=picks['champ']||''; const champRl=DB.results['champ']||'';
+    if(champPk)normalHtml+=line('🌟','Campeón: '+champPk,
+      champRl?(champPk===champRl?'✓ Acertaste (+5 pts)':'✗ No acertaste (0 pts)'):'Por definir',
+      bd.champ, champRl?(champPk===champRl?true:false):null);
+    normalHtml+=subtotal('Subtotal picks normales',mainTotal,'#93c5fd');
+
+    // Apuestas especiales
+    const scorerPk=special.scorer||''; const scorerRl=DB.results.scorer||'';
+    const p1pk=special.p1||'',p2pk=special.p2||'',p3pk=special.p3||'';
+    const p1rl=DB.results.p1||'',p2rl=DB.results.p2||'',p3rl=DB.results.p3||'';
+    let espHtml=sectionTitle('Apuestas especiales (se suman por separado)');
+    if(scorerPk)espHtml+=line('⚽','Goleador: '+scorerPk,
+      scorerRl?(scorerPk.toLowerCase()===scorerRl.toLowerCase()?'✓ Acertaste (+5 pts)':'✗ No acertaste (0 pts)'):'Por definir',
+      scorerRl&&scorerPk.toLowerCase()===scorerRl.toLowerCase()?5:0,
+      scorerRl?(scorerPk.toLowerCase()===scorerRl.toLowerCase()?true:false):null);
+    if(p1pk)espHtml+=line('🥇','1° lugar: '+p1pk,
+      p1rl?(p1pk===p1rl?'✓ Acertaste (+3 pts)':'✗ No acertaste (0 pts)'):'Por definir',
+      p1rl&&p1pk===p1rl?3:0, p1rl?(p1pk===p1rl?true:false):null);
+    if(p2pk)espHtml+=line('🥈','2° lugar: '+p2pk,
+      p2rl?(p2pk===p2rl?'✓ Acertaste (+3 pts)':'✗ No acertaste (0 pts)'):'Por definir',
+      p2rl&&p2pk===p2rl?3:0, p2rl?(p2pk===p2rl?true:false):null);
+    if(p3pk)espHtml+=line('🥉','3° lugar: '+p3pk,
+      p3rl?(p3pk===p3rl?'✓ Acertaste (+3 pts)':'✗ No acertaste (0 pts)'):'Por definir',
+      p3rl&&p3pk===p3rl?3:0, p3rl?(p3pk===p3rl?true:false):null);
+    if(!scorerPk&&!p1pk&&!p2pk&&!p3pk)espHtml+=`<div style="font-size:12px;color:#64748b;padding:6px 0;">No ingresaste apuestas especiales</div>`;
+    espHtml+=subtotal('Subtotal apuestas especiales',sepTotal,'#c4b5fd');
+
+    html+=`<div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #334155;border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📊 Desglose de puntos</div>
+      ${normalHtml}
+      ${espHtml}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:1px solid #334155;">
+        <div style="font-size:14px;font-weight:700;color:#f1f5f9;">TOTAL</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:#fbbf24;">${bd.total} pts</div>
       </div>
     </div>`;
   }
