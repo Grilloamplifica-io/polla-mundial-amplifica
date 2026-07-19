@@ -2027,9 +2027,15 @@ function renderMisPicks(){
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📊 Desglose de puntos</div>
       ${normalHtml}
       ${espHtml}
-      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:1px solid #334155;">
-        <div style="font-size:14px;font-weight:700;color:#f1f5f9;">TOTAL</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:800;color:#fbbf24;">${bd.total} pts</div>
+      <div style="display:flex;gap:8px;padding-top:10px;margin-top:6px;border-top:1px solid #334155;">
+        <div style="flex:1;background:rgba(147,197,253,0.08);border:1px solid rgba(147,197,253,0.25);border-radius:8px;padding:8px 10px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Picks normales</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#fbbf24;">${mainTotal} pts</div>
+        </div>
+        <div style="flex:1;background:rgba(196,181,253,0.08);border:1px solid rgba(196,181,253,0.25);border-radius:8px;padding:8px 10px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#c4b5fd;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Apuestas especiales</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#e9d5ff;">${sepTotal} pts</div>
+        </div>
       </div>
     </div>`;
   }
