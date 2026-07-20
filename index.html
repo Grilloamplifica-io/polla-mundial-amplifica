@@ -518,6 +518,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <div style="font-size:11px;color:#c4b5fd;margin-bottom:10px;">Goleador del torneo · Podio final — competencia independiente</div>
         <div id="ranking-special-list"><div style="color:#c4b5fd;font-size:13px;text-align:center;padding:16px;">Cargando...</div></div>
       </div>
+      <div class="card" style="background:linear-gradient(135deg,#7a2800,#3d1500);border-color:rgba(251,191,36,0.5);">
+        <div class="card-title" style="color:#fde68a;">🏅 Campeón de Campeones</div>
+        <div style="font-size:11px;color:#fcd34d;margin-bottom:10px;">Picks normales + Apuestas especiales — puntaje total combinado</div>
+        <div id="ranking-total-list"><div style="color:#fcd34d;font-size:13px;text-align:center;padding:16px;">Cargando...</div></div>
+      </div>
     </div>
 
     <!-- ADMIN -->
@@ -1491,6 +1496,31 @@ function renderRanking(){
   document.getElementById('ranking-special-list').innerHTML=shtml;
   const sl2=document.getElementById('ranking-special-list-2');
   if(sl2)sl2.innerHTML=shtml;
+
+  // ── Campeón de Campeones (normal + especiales) ──
+  const totalRows=[];
+  for(const [uid,data] of Object.entries(DB.users)){
+    if(uid===ADMIN_RUT)continue;
+    const main=calcMainScore(uid,data.picks,data.koPicks);
+    const esp=calcSpecialScore(uid,data.special||{});
+    const exact=calcExact(uid,data.picks,data.koPicks);
+    totalRows.push({name:data.name,area:data.area||'',main,esp,total:main+esp,exact});
+  }
+  totalRows.sort((a,b)=>b.total-a.total||b.exact-a.exact);
+  let thtml='';
+  if(totalRows.length===0){
+    thtml='<div style="color:#fcd34d;font-size:13px;text-align:center;padding:16px;">Nadie ha guardado picks aún.</div>';
+  } else {
+    let trank=1;
+    totalRows.forEach((r,idx)=>{
+      if(idx>0&&(totalRows[idx-1].total!==r.total||totalRows[idx-1].exact!==r.exact))trank=idx+1;
+      const medal=trank===1?`<div class="rank-medal" style="background:#f59e0b;color:#7c2d12;">1</div>`:trank===2?`<div class="rank-medal" style="background:#d97706;color:#7c2d12;">2</div>`:trank===3?`<div class="rank-medal" style="background:#b45309;color:#fff;">3</div>`:`<div class="rank-medal medal-n">${trank}</div>`;
+      const sub=`<span style="font-size:10px;color:#fcd34d;">⚽ ${r.main} pts</span> <span style="font-size:10px;color:#c4b5fd;">⭐ ${r.esp} pts</span>${r.exact>0?` <span style="font-size:10px;color:#4ade80;">🎯 ${r.exact} exactos</span>`:''}`;
+      thtml+=`<div class="ranking-row" style="border-bottom-color:rgba(251,191,36,0.2);">${medal}<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:#fef3c7;">${r.name}${r.area?` <span style="font-size:10px;color:#fcd34d;">(${r.area})</span>`:''}</div><div style="margin-top:2px;">${sub}</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:#fbbf24;">${r.total}<span style="font-size:12px;font-weight:400;color:#fcd34d;"> pts</span></div></div>`;
+    });
+  }
+  const tl=document.getElementById('ranking-total-list');
+  if(tl)tl.innerHTML=thtml;
 }
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
